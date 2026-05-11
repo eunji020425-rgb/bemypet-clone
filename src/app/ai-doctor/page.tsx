@@ -37,16 +37,34 @@ export default function AIDoctorPage() {
     setInput('')
     setLoading(true)
 
+    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+
     try {
       const res = await fetch('/api/gemini/doctor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages }),
       })
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || '죄송합니다, 답변을 가져오지 못했습니다.' }])
+      if (!res.body) throw new Error('No stream')
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        accumulated += decoder.decode(value, { stream: true })
+        setMessages(prev => {
+          const copy = [...prev]
+          copy[copy.length - 1] = { role: 'assistant', content: accumulated }
+          return copy
+        })
+      }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '오류가 발생했습니다. 다시 시도해주세요.' }])
+      setMessages(prev => {
+        const copy = [...prev]
+        copy[copy.length - 1] = { role: 'assistant', content: '오류가 발생했습니다. 다시 시도해주세요.' }
+        return copy
+      })
     } finally {
       setLoading(false)
     }

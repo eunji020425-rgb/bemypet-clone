@@ -40,6 +40,8 @@ export default function HospitalMap() {
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Hospital | null>(null)
   const [searchQuery, setSearchQuery] = useState('동물병원')
+  const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
+  const [locError, setLocError] = useState('')
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
 
@@ -106,20 +108,39 @@ export default function HospitalMap() {
   }
 
   const locate = () => {
-    if (!navigator.geolocation) return
+    if (!navigator.geolocation) {
+      setLocStatus('fallback')
+      setLocError('이 브라우저는 위치 정보를 지원하지 않습니다.')
+      const lat = 37.5665, lng = 126.978
+      setUserPos([lat, lng])
+      search(searchQuery, lat, lng).then(items => initMap(lat, lng, items))
+      return
+    }
     setLoading(true)
+    setLocStatus('locating')
+    setLocError('')
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const { latitude: lat, longitude: lng } = coords
         setUserPos([lat, lng])
+        setLocStatus('success')
         const items = await search(searchQuery, lat, lng)
         await initMap(lat, lng, items)
       },
-      () => {
-        // 위치 거부 시 서울 기본값
+      (err) => {
+        setLocStatus(err.code === 1 ? 'denied' : 'fallback')
+        setLocError(
+          err.code === 1
+            ? '위치 권한이 거부되었습니다. 브라우저 주소창 좌측 자물쇠 아이콘에서 위치 권한을 허용해주세요.'
+            : err.code === 2
+            ? '위치를 가져올 수 없습니다. GPS/네트워크 상태를 확인해주세요.'
+            : '위치 요청 시간이 초과되었습니다.'
+        )
         const lat = 37.5665, lng = 126.978
+        setUserPos([lat, lng])
         search(searchQuery, lat, lng).then(items => initMap(lat, lng, items))
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }
 
@@ -152,6 +173,26 @@ export default function HospitalMap() {
           <Navigation size={16} className="text-[#888]" />
         </button>
       </form>
+
+      {/* 위치 상태 알림 */}
+      {locStatus === 'locating' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-xs text-blue-700">
+          📍 현재 위치를 확인하는 중입니다...
+        </div>
+      )}
+      {locStatus === 'success' && userPos && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-700">
+          ✅ 현재 위치 기준으로 검색됩니다 ({userPos[0].toFixed(4)}, {userPos[1].toFixed(4)})
+        </div>
+      )}
+      {(locStatus === 'denied' || locStatus === 'fallback') && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700 flex items-center justify-between gap-2">
+          <span>⚠️ {locError} 현재 서울 기준으로 표시 중입니다.</span>
+          <button onClick={locate} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
+            다시 시도
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 지도 */}

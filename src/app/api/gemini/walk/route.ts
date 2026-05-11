@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+export const runtime = 'edge'
+
 export async function POST(request: Request) {
   const { lat, lng, petType } = await request.json()
 
@@ -10,7 +12,10 @@ export async function POST(request: Request) {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' })
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash-exp',
+    generationConfig: { responseMimeType: 'application/json' },
+  })
 
   const prompt = `당신은 반려동물 산책 전문가입니다.
 좌표 위도 ${lat}, 경도 ${lng} 근처의 반려동물 산책로 5곳을 추천해주세요.
