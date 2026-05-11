@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { PenSquare, Menu, X } from 'lucide-react'
+import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -32,7 +32,7 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* 로고 */}
         <Link href="/" className="font-bold text-xl tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-          <span className="text-[#2d2d2d]">Bemypet</span>
+          <span className="text-[#f5c518]">Pet</span><span className="text-[#2d2d2d]">Together</span>
         </Link>
 
         {/* 데스크탑 메뉴 */}
@@ -40,6 +40,9 @@ export default function Header() {
           <Link href="/" className="hover:text-[#f5c518] transition-colors">홈</Link>
           <Link href="/community" className="hover:text-[#f5c518] transition-colors">커뮤니티</Link>
           <Link href="/chat" className="hover:text-[#f5c518] transition-colors">실시간채팅</Link>
+          <Link href="/hospital" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><MapPin size={14}/>동물병원</Link>
+          <Link href="/ai-doctor" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><Stethoscope size={14}/>AI닥터</Link>
+          <Link href="/walk" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><Footprints size={14}/>산책로</Link>
         </nav>
 
         {/* 우측 버튼 영역 */}
@@ -83,6 +86,9 @@ export default function Header() {
           <Link href="/" onClick={() => setMenuOpen(false)}>홈</Link>
           <Link href="/community" onClick={() => setMenuOpen(false)}>커뮤니티</Link>
           <Link href="/chat" onClick={() => setMenuOpen(false)}>실시간채팅</Link>
+          <Link href="/hospital" onClick={() => setMenuOpen(false)}>동물병원</Link>
+          <Link href="/ai-doctor" onClick={() => setMenuOpen(false)}>AI닥터</Link>
+          <Link href="/walk" onClick={() => setMenuOpen(false)}>산책로 추천</Link>
           {user && (
             <Link href="/community/write" onClick={() => setMenuOpen(false)} className="text-[#f5c518] font-bold">
               글쓰기

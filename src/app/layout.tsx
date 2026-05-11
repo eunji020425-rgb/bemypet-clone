@@ -3,8 +3,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Bemypet - 우리 아이의 시간을 더 행복하게",
-  description: "반려동물 커뮤니티 - 정보 공유, 자유게시판, 실시간 채팅",
+  title: "PetTogether - 우리 아이의 시간을 더 행복하게",
+  description: "반려동물 커뮤니티 - 정보 공유, 자유게시판, 실시간 채팅, 동물병원 찾기, AI닥터",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <footer className="text-center text-xs text-[#aaa] py-6 border-t border-[#ececec] mt-10">
-          © 2024 Bemypet Clone. All rights reserved.
+          © 2024 PetTogether. All rights reserved.
         </footer>
       </body>
     </html>
