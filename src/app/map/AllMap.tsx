@@ -41,6 +41,10 @@ interface Item {
   features?: string[]
   dogFriendly?: string
   accessible?: string
+  // 병원 전용
+  is24h?: boolean
+  emergency?: boolean
+  services?: string[]
 }
 
 const PET_PLACE_CATEGORIES: Category[] = ['restaurant', 'cafe', 'playground']
@@ -139,23 +143,79 @@ export default function AllMap() {
       }
 
       combined.sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999))
-      // 펫 장소/산책로 enriching 표시
-      const withEnrich = combined.map(it => {
-        if (PET_PLACE_CATEGORIES.includes(it.category) || it.category === 'walk') {
-          return { ...it, enriching: true }
-        }
-        return it
-      })
+      // 모든 카테고리에 enriching 표시
+      const withEnrich = combined.map(it => ({ ...it, enriching: true }))
       setItems(withEnrich)
       // 백그라운드 enrichment 시작
       const petPlaceItems = withEnrich.filter(it => PET_PLACE_CATEGORIES.includes(it.category))
       const walkItems = withEnrich.filter(it => it.category === 'walk')
+      const hospitalItems = withEnrich.filter(it => it.category === 'hospital')
       if (petPlaceItems.length > 0) enrichWithGemini(petPlaceItems)
       if (walkItems.length > 0) enrichWalksWithGemini(walkItems)
+      if (hospitalItems.length > 0) enrichHospitalsWithGemini(hospitalItems)
       return withEnrich
     } finally {
       setLoading(false)
     }
+  }
+
+  const enrichHospitalsWithGemini = async (toEnrich: Item[]) => {
+    if (toEnrich.length === 0) return
+    const BATCH = 6
+    const batches: Item[][] = []
+    for (let i = 0; i < toEnrich.length; i += BATCH) {
+      batches.push(toEnrich.slice(i, i + BATCH))
+    }
+    await Promise.all(
+      batches.map(async batch => {
+        try {
+          const hospitals = batch.map(it => ({ id: it.id, name: it.name, address: it.address }))
+          const res = await fetch('/api/gemini/hospital', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ hospitals }),
+          })
+          const data = await res.json()
+          const enrichments = data.enrichments || []
+          applyHospitalEnrichment(batch, enrichments)
+        } catch {}
+      })
+    )
+  }
+
+  const applyHospitalEnrichment = (batch: Item[], enrichments: any[]) => {
+    const byId = new Map<string, any>()
+    batch.forEach((p, i) => {
+      if (enrichments[i]) byId.set(p.id, enrichments[i])
+    })
+    setItems(prev =>
+      prev.map(it => {
+        const e = byId.get(it.id)
+        if (!e) return it
+        return {
+          ...it,
+          hours: e.hours,
+          is24h: e.is24h,
+          emergency: e.emergency,
+          services: Array.isArray(e.services) ? e.services : [],
+          summary: e.summary,
+          enriching: false,
+        }
+      })
+    )
+    setSelected(prev => {
+      if (!prev) return prev
+      const e = byId.get(prev.id)
+      if (!e) return prev
+      return {
+        ...prev,
+        hours: e.hours,
+        is24h: e.is24h,
+        emergency: e.emergency,
+        services: Array.isArray(e.services) ? e.services : [],
+        summary: e.summary,
+      }
+    })
   }
 
   const enrichWalksWithGemini = async (toEnrich: Item[]) => {
@@ -205,6 +265,7 @@ export default function AllMap() {
           features: Array.isArray(e.features) ? e.features : [],
           dogFriendly: e.dogFriendly,
           accessible: e.accessible,
+          hours: e.hours,
           enriching: false,
         }
       })
@@ -235,6 +296,7 @@ export default function AllMap() {
         features: Array.isArray(e.features) ? e.features : [],
         dogFriendly: e.dogFriendly,
         accessible: e.accessible,
+        hours: e.hours,
       }
     })
   }
@@ -606,6 +668,23 @@ export default function AllMap() {
                       {it.petFriendly === '조건부' && (
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-yellow-50 text-yellow-700 border-yellow-200">
                           ⚠️ 조건부
+                        </span>
+                      )}
+                      {/* 운영시간 (모든 카테고리 공통) */}
+                      {it.hours && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-slate-50 text-slate-700 border-slate-200">
+                          🕐 {it.hours}
+                        </span>
+                      )}
+                      {/* 병원 전용 배지 */}
+                      {it.category === 'hospital' && it.is24h && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-red-50 text-red-700 border-red-200">
+                          🌙 24시간
+                        </span>
+                      )}
+                      {it.category === 'hospital' && it.emergency && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-orange-50 text-orange-700 border-orange-200">
+                          🚑 응급
                         </span>
                       )}
                       {it.vaccination === '필수' && (
