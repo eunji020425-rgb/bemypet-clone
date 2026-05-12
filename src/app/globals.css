@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'KOTRAHOPE';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/KOTRAHOPE.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Soft Green Glow Palette */
   --background: #fdfaf0;
@@ -38,9 +46,9 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'KOTRAHOPE', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   letter-spacing: -0.2px;
-  line-height: 1.5;
+  line-height: 1.55;
   background-image:
     radial-gradient(ellipse at 20% 20%, rgba(212,232,176,0.35) 0, transparent 45%),
     radial-gradient(ellipse at 80% 60%, rgba(184,217,144,0.28) 0, transparent 50%),
