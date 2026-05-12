@@ -46,7 +46,7 @@ export default function AllMap() {
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
   const [loading, setLoading] = useState(false)
   const [selected, setSelected] = useState<Item | null>(null)
-  const [filter, setFilter] = useState<Set<Category>>(new Set(ALL_CATEGORIES))
+  const [filter, setFilter] = useState<Category | 'all'>('all')
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
   const [locError, setLocError] = useState('')
   const [showResearchBtn, setShowResearchBtn] = useState(false)
@@ -189,11 +189,11 @@ export default function AllMap() {
       marker.on('click', () => setSelected(it))
       markersRef.current.set(it.id, marker)
       // 필터에 포함된 카테고리만 즉시 추가
-      if (filter.has(it.category)) marker.addTo(mapInstanceRef.current)
+      if (filter === 'all' || filter === it.category) marker.addTo(mapInstanceRef.current)
     })
 
     // 자동 줌
-    const visibleItems = all.filter(it => filter.has(it.category))
+    const visibleItems = all.filter(it => filter === 'all' || filter === it.category)
     if (visibleItems.length > 0) {
       const bounds = L.latLngBounds([[lat, lng], ...visibleItems.map(it => [it.lat, it.lng] as [number, number])])
       mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
@@ -207,7 +207,7 @@ export default function AllMap() {
       if (id === '__user') return
       const item = items.find(it => it.id === id)
       if (!item) return
-      const show = filter.has(item.category)
+      const show = filter === 'all' || filter === item.category
       if (show) {
         if (!mapInstanceRef.current.hasLayer(marker)) marker.addTo(mapInstanceRef.current)
       } else {
@@ -256,16 +256,7 @@ export default function AllMap() {
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
 
-  const toggleCategory = (cat: Category) => {
-    setFilter(prev => {
-      const next = new Set(prev)
-      if (next.has(cat)) next.delete(cat)
-      else next.add(cat)
-      return next
-    })
-  }
-
-  const filtered = items.filter(it => filter.has(it.category))
+  const filtered = filter === 'all' ? items : items.filter(it => it.category === filter)
   const counts: Record<Category, number> = {
     hospital: items.filter(it => it.category === 'hospital').length,
     restaurant: items.filter(it => it.category === 'restaurant').length,
@@ -297,16 +288,26 @@ export default function AllMap() {
         </div>
       )}
 
-      {/* 카테고리 필터 */}
+      {/* 카테고리 필터 (단일 선택) */}
       <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setFilter('all')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition border ${
+            filter === 'all'
+              ? 'bg-[#2d2d2d] text-white border-[#2d2d2d]'
+              : 'bg-white text-[#666] border-[#ececec] hover:border-[#2d2d2d]'
+          }`}
+        >
+          전체 <span className="text-xs opacity-80">({items.length})</span>
+        </button>
         {ALL_CATEGORIES.map(cat => {
           const style = STYLES[cat]
           const Icon = style.icon
-          const active = filter.has(cat)
+          const active = filter === cat
           return (
             <button
               key={cat}
-              onClick={() => toggleCategory(cat)}
+              onClick={() => setFilter(cat)}
               style={active ? { backgroundColor: style.pin, borderColor: style.pin } : {}}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition border ${
                 active ? 'text-white' : 'bg-white text-[#666] border-[#ececec] hover:border-[#aaa]'
@@ -345,7 +346,7 @@ export default function AllMap() {
 
         {/* 리스트 */}
         <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '600px' }}>
-          <p className="text-xs text-[#aaa] px-1 pb-1">{filter.size === ALL_CATEGORIES.length ? '전체' : '선택한 카테고리'} · {filtered.length}곳</p>
+          <p className="text-xs text-[#aaa] px-1 pb-1">{filter === 'all' ? '전체' : STYLES[filter].label} · {filtered.length}곳</p>
           {loading && filtered.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">
               <div className="text-3xl mb-2 animate-bounce">🐾</div>
