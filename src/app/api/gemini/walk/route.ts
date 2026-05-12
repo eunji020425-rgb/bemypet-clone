@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const { lat, lng, petType } = await request.json()
 
-    const apiKey = process.env.GEMINI_API_KEY
+    const apiKey = process.env.GEMINI_API_KEY?.trim()
     if (!apiKey) {
       return NextResponse.json({ error: 'Gemini API key not configured' }, { status: 500 })
     }
