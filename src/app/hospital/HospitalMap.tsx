@@ -113,7 +113,7 @@ export default function HospitalMap() {
     items.forEach((h, i) => {
       const icon = L.divIcon({
         html: `<div style="position:relative;width:36px;height:42px;cursor:pointer">
-          <div style="background:#ef4444;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:absolute;top:0;left:0;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
+          <div style="background:#fca5a5;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:absolute;top:0;left:0;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
             <span style="transform:rotate(45deg);font-size:11px;font-weight:bold;color:white">${i + 1}</span>
           </div>
         </div>`,
@@ -247,7 +247,7 @@ export default function HospitalMap() {
                 className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#f5c518] shadow-md' : 'border-[#ececec] hover:border-[#f5c518]'}`}
               >
                 <div className="flex items-start gap-2">
-                  <div className="w-7 h-7 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
+                  <div className="w-7 h-7 rounded-full bg-red-300 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-[#2d2d2d] truncate">{h.name}</p>
