@@ -148,7 +148,7 @@ export default function WalkPage() {
     }
   }
 
-  const recommend = async (lat: number, lng: number) => {
+  const recommend = async (lat: number, lng: number, rect?: string) => {
     setLoading(true)
     setError('')
     lastSearchCenterRef.current = [lat, lng]
@@ -158,7 +158,7 @@ export default function WalkPage() {
       const res = await fetch('/api/walks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng }),
+        body: JSON.stringify({ lat, lng, rect }),
       })
       const data = await res.json()
       const parks: Trail[] = (data.parks || []).map((p: Trail) => ({ ...p, enriching: true }))
@@ -267,8 +267,13 @@ export default function WalkPage() {
           {showResearchBtn && (
             <button
               onClick={() => {
-                const c = mapInstanceRef.current.getCenter()
-                recommend(c.lat, c.lng)
+                const map = mapInstanceRef.current
+                const c = map.getCenter()
+                const b = map.getBounds()
+                const sw = b.getSouthWest()
+                const ne = b.getNorthEast()
+                const rect = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`
+                recommend(c.lat, c.lng, rect)
               }}
               disabled={loading}
               className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"

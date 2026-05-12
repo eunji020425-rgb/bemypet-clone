@@ -38,20 +38,19 @@ export default function HospitalMap() {
   const markersRef = useRef<any[]>([])
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
 
-  const fetchHospitals = async (lat: number, lng: number) => {
+  const fetchHospitals = async (lat: number, lng: number, rect?: string) => {
     setLoading(true)
     lastSearchCenterRef.current = [lat, lng]
     setShowResearchBtn(false)
     try {
-      // 항상 최대 반경(20km)으로 검색해서 주변 동물병원을 다 가져옴
-      // 카카오 API는 페이지당 최대 15개, 최대 3페이지(45개)까지 조회
       const allItems: Hospital[] = []
       const seenIds = new Set<string>()
 
       for (let page = 1; page <= 3; page++) {
-        const res = await fetch(
-          `/api/hospitals?query=동물병원&lat=${lat}&lng=${lng}&radius=20000&page=${page}`
-        )
+        const params = rect
+          ? `query=동물병원&rect=${rect}&page=${page}`
+          : `query=동물병원&lat=${lat}&lng=${lng}&radius=20000&page=${page}`
+        const res = await fetch(`/api/hospitals?${params}`)
         const data = await res.json()
         const items: Hospital[] = data.items || []
         if (items.length === 0) break
@@ -60,7 +59,7 @@ export default function HospitalMap() {
           seenIds.add(h.id)
           allItems.push(h)
         }
-        if (items.length < 15) break
+        if (data.isEnd || items.length < 15) break
       }
       setSearchRadius(20000)
       setHospitals(allItems)
@@ -206,8 +205,13 @@ export default function HospitalMap() {
           {showResearchBtn && (
             <button
               onClick={() => {
-                const c = mapInstanceRef.current.getCenter()
-                fetchHospitals(c.lat, c.lng).then(items => initMap(c.lat, c.lng, items))
+                const map = mapInstanceRef.current
+                const c = map.getCenter()
+                const b = map.getBounds()
+                const sw = b.getSouthWest()
+                const ne = b.getNorthEast()
+                const rect = `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`
+                fetchHospitals(c.lat, c.lng, rect).then(items => initMap(c.lat, c.lng, items))
               }}
               disabled={loading}
               className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
