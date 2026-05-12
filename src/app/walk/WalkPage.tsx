@@ -1,31 +1,43 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Footprints, Navigation, Clock, Route, ChevronDown } from 'lucide-react'
+import { Navigation, Clock, Route, ExternalLink } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 
 interface Trail {
+  id: string
   name: string
-  description: string
-  distance: string
-  duration: string
-  difficulty: string
-  features: string[]
   address: string
+  category?: string
   lat: number
   lng: number
+  distance: number
+  link?: string
+  difficulty: string
+  description: string
   tip: string
+  features: string[]
 }
 
 const DIFF_COLOR: Record<string, string> = {
-  '쉬움': 'text-green-600 bg-green-50',
-  '보통': 'text-yellow-600 bg-yellow-50',
-  '어려움': 'text-red-600 bg-red-50',
+  '쉬움': 'text-green-600 bg-green-50 border-green-200',
+  '보통': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+  '어려움': 'text-red-600 bg-red-50 border-red-200',
+}
+
+function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 export default function WalkPage() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
+  const markersRef = useRef<any[]>([])
+  const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
   const [petType, setPetType] = useState('강아지')
@@ -34,9 +46,15 @@ export default function WalkPage() {
   const [error, setError] = useState('')
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
   const [locError, setLocError] = useState('')
+  const [showResearchBtn, setShowResearchBtn] = useState(false)
 
-  const initMap = async (lat: number, lng: number, trailList: Trail[]) => {
+  const initMap = async (lat: number, lng: number, items: Trail[]) => {
+    if (typeof window === 'undefined') return
     const L = (await import('leaflet')).default
+
+    markersRef.current.forEach(m => m.remove())
+    markersRef.current = []
+
     if (!mapInstanceRef.current) {
       mapInstanceRef.current = L.map(mapRef.current!).setView([lat, lng], 13)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -44,38 +62,62 @@ export default function WalkPage() {
       }).addTo(mapInstanceRef.current)
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100)
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 500)
+
+      // 지도 이동 감지
+      mapInstanceRef.current.on('moveend', () => {
+        const center = mapInstanceRef.current.getCenter()
+        const last = lastSearchCenterRef.current
+        if (!last) return
+        const dist = calcDistance(last[0], last[1], center.lat, center.lng)
+        setShowResearchBtn(dist > 1)
+      })
     } else {
       mapInstanceRef.current.setView([lat, lng], 13)
       mapInstanceRef.current.invalidateSize()
-      mapInstanceRef.current.eachLayer((layer: any) => {
-        if (layer._latlng) mapInstanceRef.current.removeLayer(layer)
-      })
     }
 
-    const L2 = (await import('leaflet')).default
-    // 내 위치
-    const myIcon = L2.divIcon({
-      html: `<div style="background:#f5c518;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
-      className: '', iconAnchor: [8, 8],
+    // 내 위치 마커 (실제 GPS 좌표)
+    const myLat = userPos?.[0] ?? lat
+    const myLng = userPos?.[1] ?? lng
+    const myIcon = L.divIcon({
+      html: `<div style="background:#3b82f6;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(59,130,246,0.2)"></div>`,
+      className: '', iconAnchor: [9, 9],
     })
-    L2.marker([lat, lng], { icon: myIcon }).addTo(mapInstanceRef.current).bindPopup('📍 현재 위치')
+    const myMarker = L.marker([myLat, myLng], { icon: myIcon })
+      .addTo(mapInstanceRef.current)
+      .bindPopup('📍 현재 위치')
+    markersRef.current.push(myMarker)
 
-    // 산책로 마커
-    trailList.forEach((t, i) => {
+    // 산책로 핀 (초록색 발자국)
+    items.forEach((t, i) => {
       if (!t.lat || !t.lng) return
-      const icon = L2.divIcon({
-        html: `<div style="background:#22c55e;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)">🐾</div>`,
-        className: '', iconAnchor: [15, 15],
+      const icon = L.divIcon({
+        html: `<div style="position:relative;width:36px;height:42px;cursor:pointer">
+          <div style="background:#22c55e;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:absolute;top:0;left:0;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
+            <span style="transform:rotate(45deg);font-size:11px;font-weight:bold;color:white">${i + 1}</span>
+          </div>
+        </div>`,
+        className: '', iconAnchor: [18, 42],
       })
-      L2.marker([t.lat, t.lng], { icon })
+      const marker = L.marker([t.lat, t.lng], { icon })
         .addTo(mapInstanceRef.current)
-        .bindPopup(`<b>${t.name}</b><br/>${t.distance} · ${t.duration}`)
+        .bindPopup(`<b>${t.name}</b><br/>${t.address ?? ''}<br/>${t.distance.toFixed(1)}km`)
+      marker.on('click', () => setSelected(t))
+      markersRef.current.push(marker)
     })
+
+    // 자동 줌
+    if (items.length > 0) {
+      const bounds = L.latLngBounds([[lat, lng], ...items.map(t => [t.lat, t.lng] as [number, number])])
+      mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+    }
   }
 
   const recommend = async (lat: number, lng: number) => {
     setLoading(true)
     setError('')
+    lastSearchCenterRef.current = [lat, lng]
+    setShowResearchBtn(false)
     try {
       const res = await fetch('/api/gemini/walk', {
         method: 'POST',
@@ -83,11 +125,17 @@ export default function WalkPage() {
         body: JSON.stringify({ lat, lng, petType }),
       })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setTrails(data.trails || [])
-      await initMap(lat, lng, data.trails || [])
+      if (data.error && !data.trails) {
+        setError(data.error)
+        setTrails([])
+        return
+      }
+      const items = data.trails || []
+      setTrails(items)
+      await initMap(lat, lng, items)
     } catch (e: any) {
       setError('산책로 추천을 가져오지 못했습니다. 다시 시도해주세요.')
+      setTrails([])
     } finally {
       setLoading(false)
     }
@@ -116,7 +164,7 @@ export default function WalkPage() {
         setLocStatus(err.code === 1 ? 'denied' : 'fallback')
         setLocError(
           err.code === 1
-            ? '위치 권한이 거부되었습니다. 브라우저 주소창 좌측 자물쇠 아이콘에서 위치 권한을 허용해주세요.'
+            ? '위치 권한이 거부되었습니다. 주소창 좌측 자물쇠 아이콘에서 위치 권한을 허용해주세요.'
             : err.code === 2
             ? '위치를 가져올 수 없습니다. GPS/네트워크 상태를 확인해주세요.'
             : '위치 요청 시간이 초과되었습니다.'
@@ -135,7 +183,7 @@ export default function WalkPage() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* 컨트롤 */}
       <div className="flex items-center gap-3 flex-wrap">
         <select
@@ -159,22 +207,24 @@ export default function WalkPage() {
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-xs text-red-700">{error}</div>
+      )}
 
-      {/* 위치 상태 알림 */}
+      {/* 위치 상태 */}
       {locStatus === 'locating' && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-xs text-blue-700">
-          📍 현재 위치를 확인하는 중입니다...
+          📍 현재 위치를 확인하는 중...
         </div>
       )}
       {locStatus === 'success' && userPos && (
         <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-700">
-          ✅ 현재 위치 기준으로 추천 ({userPos[0].toFixed(4)}, {userPos[1].toFixed(4)})
+          ✅ 현재 위치 기준 추천 (반경 20km 내 공원·산책로)
         </div>
       )}
       {(locStatus === 'denied' || locStatus === 'fallback') && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700 flex items-center justify-between gap-2">
-          <span>⚠️ {locError} 현재 서울 기준으로 표시 중입니다.</span>
+          <span>⚠️ {locError} 서울 기준 표시</span>
           <button onClick={locate} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
             다시 시도
           </button>
@@ -183,65 +233,117 @@ export default function WalkPage() {
 
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 지도 */}
-        <div className="lg:w-3/5">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '480px' }} />
+        <div className="lg:w-3/5 relative">
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
+          {showResearchBtn && (
+            <button
+              onClick={() => {
+                const c = mapInstanceRef.current.getCenter()
+                recommend(c.lat, c.lng)
+              }}
+              disabled={loading}
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
+            >
+              <Navigation size={14} />
+              이 지역에서 다시 검색
+            </button>
+          )}
         </div>
 
         {/* 산책로 목록 */}
-        <div className="lg:w-2/5 flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '480px' }}>
-          {loading && (
-            <div className="text-center py-10">
+        <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '550px' }}>
+          <p className="text-xs text-[#aaa] px-1 pb-1">총 {trails.length}개의 산책로 추천</p>
+          {loading && trails.length === 0 && (
+            <div className="text-center py-10 text-[#aaa] text-sm">
               <div className="text-3xl mb-2 animate-bounce">🐾</div>
-              <p className="text-sm text-[#aaa]">AI가 산책로를 추천하고 있어요...</p>
+              AI가 산책로를 추천하고 있어요...
             </div>
           )}
           {!loading && trails.length === 0 && !error && (
             <div className="text-center py-10 text-[#aaa] text-sm">위치를 기반으로 산책로를 추천받으세요!</div>
           )}
-          {trails.map((t, i) => (
-            <div
-              key={i}
-              onClick={() => {
-                setSelected(selected?.name === t.name ? null : t)
-                if (t.lat && t.lng) mapInstanceRef.current?.setView([t.lat, t.lng], 15)
-              }}
-              className={`bg-white rounded-xl p-4 border cursor-pointer transition-colors ${selected?.name === t.name ? 'border-[#f5c518] shadow-md' : 'border-[#ececec] hover:border-[#22c55e]'}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">🐾</span>
-                    <h3 className="font-bold text-[#2d2d2d] text-sm">{t.name}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${DIFF_COLOR[t.difficulty] ?? 'text-gray-600 bg-gray-50'}`}>
-                      {t.difficulty}
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#666] mb-2 line-clamp-2">{t.description}</p>
-                  <div className="flex gap-3 text-xs text-[#aaa]">
-                    <span className="flex items-center gap-1"><Route size={11} />{t.distance}</span>
-                    <span className="flex items-center gap-1"><Clock size={11} />{t.duration}</span>
+          {trails.map((t, i) => {
+            const isSelected = selected?.id === t.id
+            return (
+              <div
+                key={t.id}
+                onClick={() => {
+                  setSelected(t)
+                  mapInstanceRef.current?.setView([t.lat, t.lng], 16)
+                  markersRef.current[i + 1]?.openPopup()
+                }}
+                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#f5c518] shadow-md' : 'border-[#ececec] hover:border-[#22c55e]'}`}
+              >
+                <div className="flex items-start gap-2">
+                  <div className="w-7 h-7 rounded-full bg-green-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold text-[#2d2d2d] truncate flex-1">{t.name}</p>
+                      <span className="text-xs text-[#22c55e] font-medium flex-shrink-0">
+                        {t.distance < 1 ? `${Math.round(t.distance * 1000)}m` : `${t.distance.toFixed(1)}km`}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#888] truncate mt-0.5">{t.address}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[t.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+                        {t.difficulty}
+                      </span>
+                      {t.features?.slice(0, 2).map((f, j) => (
+                        <span key={j} className="text-xs bg-[#f5f5f5] px-2 py-0.5 rounded-full text-[#666]">{f}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <ChevronDown size={16} className={`text-[#aaa] transition-transform flex-shrink-0 ${selected?.name === t.name ? 'rotate-180' : ''}`} />
               </div>
-
-              {selected?.name === t.name && (
-                <div className="mt-3 pt-3 border-t border-[#ececec]">
-                  <p className="text-xs text-[#555] mb-2">{t.address}</p>
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {t.features?.map((f, j) => (
-                      <span key={j} className="text-xs bg-[#f5f5f5] px-2 py-0.5 rounded-full text-[#666]">{f}</span>
-                    ))}
-                  </div>
-                  <div className="bg-[#fffbee] rounded-lg px-3 py-2 text-xs text-[#7a6000]">
-                    💡 {t.tip}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
+
+      {/* 선택된 산책로 상세 */}
+      {selected && (
+        <div className="bg-[#f0fdf4] border border-green-300 rounded-2xl p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-bold text-[#2d2d2d]">🐾 {selected.name}</h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[selected.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+                  {selected.difficulty}
+                </span>
+              </div>
+              {selected.address && <p className="text-xs text-[#666] mt-1">{selected.address}</p>}
+              {selected.description && <p className="text-sm text-[#444] mt-2 leading-relaxed">{selected.description}</p>}
+              {selected.tip && (
+                <div className="mt-3 bg-white rounded-lg px-3 py-2 text-xs text-[#7a6000] border border-yellow-200">
+                  💡 <strong>산책 팁:</strong> {selected.tip}
+                </div>
+              )}
+              {selected.features?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {selected.features.map((f, j) => (
+                    <span key={j} className="text-xs bg-white px-2 py-0.5 rounded-full text-[#666] border border-[#ececec]">{f}</span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-3 mt-3">
+                {selected.link && (
+                  <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-blue-500 font-bold flex items-center gap-1">
+                    <ExternalLink size={13} />카카오맵
+                  </a>
+                )}
+                <a
+                  href={`https://map.kakao.com/link/to/${encodeURIComponent(selected.name)},${selected.lat},${selected.lng}`}
+                  target="_blank" rel="noopener"
+                  className="text-sm text-green-600 font-bold flex items-center gap-1"
+                >
+                  <Navigation size={13} />길찾기
+                </a>
+              </div>
+            </div>
+            <button onClick={() => setSelected(null)} className="text-[#aaa] hover:text-[#444] text-lg font-bold">✕</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
