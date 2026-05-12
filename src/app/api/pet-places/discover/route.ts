@@ -11,13 +11,14 @@ const MODEL_CHAIN = [
 async function getRegionName(lat: number, lng: number): Promise<string> {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=8`,
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=12`,
       { headers: { 'User-Agent': 'PetTogether/1.0' } }
     )
     const data = await res.json()
     const a = data.address || {}
-    const parts = [a.state, a.city || a.county || a.town].filter(Boolean)
-    return parts.join(' ') || a.state || a.city || ''
+    // 시/군 단위까지 정확히
+    const parts = [a.state, a.city || a.county, a.borough || a.suburb || a.town || a.village].filter(Boolean)
+    return [...new Set(parts)].join(' ') || a.state || a.city || ''
   } catch {
     return ''
   }
@@ -42,18 +43,21 @@ function nameSimilarity(a: string, b: string): number {
   return shorter.length > 1 ? matches / (shorter.length - 1) : (cleanA === cleanB ? 1 : 0)
 }
 
-// 카테고리별 키워드 매칭으로 카카오 결과 검증
+// 카테고리별 키워드 매칭으로 카카오 결과 검증 (관대하게)
 function categoryMatches(rawCategory: string, suggestedCategory: string): boolean {
   if (!rawCategory) return true
   const cat = rawCategory.toLowerCase()
+  // 펫 관련 키워드는 어떤 카테고리든 통과
+  if (/애견|반려|강아지|도그|펫|동물|펜션|글램핑|캠핑/.test(cat)) return true
   if (suggestedCategory === 'restaurant') {
-    return /음식점|식당|레스토랑|한식|양식|일식|중식|분식|패스트푸드|치킨|피자|고기|족발|보쌈|찜|구이|국밥|면|덮밥|뷔페|푸드/.test(cat)
+    return /음식점|식당|레스토랑|한식|양식|일식|중식|분식|패스트푸드|치킨|피자|고기|족발|보쌈|찜|구이|국밥|면|덮밥|뷔페|푸드|숙박/.test(cat)
   }
   if (suggestedCategory === 'cafe') {
-    return /카페|커피|디저트|베이커리|빵|디저트|커피전문점|차/.test(cat)
+    return /카페|커피|디저트|베이커리|빵|차|숙박/.test(cat)
   }
   if (suggestedCategory === 'playground') {
-    return /애견|반려|동물|펜션|글램핑|캠핑|공원|놀이/.test(cat)
+    // 운동장은 공공기관(동물보호센터)·체육시설·공원·관광 모두 허용
+    return /공원|놀이|체육|공공기관|관광|숙박|레저|시설/.test(cat)
   }
   return true
 }
@@ -76,7 +80,7 @@ async function kakaoLookup(query: string, suggestedCategory: string, lat: number
     for (const doc of docs) {
       const name = doc.place_name || ''
       if (CLOSED_KEYWORDS.some(kw => name.includes(kw))) continue
-      if (nameSimilarity(query, name) < 0.5) continue
+      if (nameSimilarity(query, name) < 0.3) continue
       if (!categoryMatches(doc.category_name || '', suggestedCategory)) continue
       // place_url 없으면 카카오맵에 등록 안 됨 = 신뢰도 낮음
       if (!doc.place_url) continue
@@ -104,25 +108,29 @@ async function getGeminiPetPlaces(region: string): Promise<{ name: string; categ
 
   const genAI = new GoogleGenerativeAI(apiKey)
 
-  const prompt = `한국 ${region} 지역의 **2024년 이후에도 현재 영업 중인** 유명 애견 동반 장소를 추천하세요.
+  const prompt = `한국 ${region} 지역에서 **2024-2026년 영업 중인** 애견 동반 장소를 최대한 많이 추천하세요.
+
+다음 유형 모두 포함:
+1. 애견동반 식당 (펜션 부설 식당, 정원 있는 음식점 포함)
+2. 애견 카페·도그카페 (야외 운동장 있는 카페 포함)
+3. 애견 운동장·도그파크
+4. **애견 펜션·글램핑** (식당+카페+운동장 복합 시설인 경우 모두 추가)
+5. **지자체 운영 무료 애견 운동장** (예: 시청·동물보호센터·시민공원 부설)
+6. **유기동물보호센터의 일반 개방 공간**
+7. SNS·블로그·인스타그램에서 유명한 곳, 후기 많은 곳
+
+복합 시설(식당+카페+운동장 다 되는 곳)은 같은 이름으로 3번 등록해도 됩니다 (각 카테고리마다).
 
 조건:
 - 폐업, 이전, 휴업한 곳 제외
 - 임시 팝업/이벤트 장소 제외
-- SNS/블로그/네이버지도/카카오맵에서 검색 가능한 실제 상호명만
-- 추측이 아니라 확실히 아는 장소만 (모르면 빈 배열)
-
-카테고리:
-- restaurant: 애견 동반 식당
-- cafe: 애견 카페, 도그카페 (야외 운동장 있는 곳 포함)
-- playground: 애견 운동장, 도그파크, 펜션 부설 운동장
 
 JSON 배열만:
 [
-  { "name": "정확한 상호명 (지역명 포함 가능)", "category": "restaurant|cafe|playground" }
+  { "name": "정확한 상호명 (지역명 포함 가능, 예: '서산 소풍', '엠플레이파크')", "category": "restaurant|cafe|playground" }
 ]
 
-확신 있는 곳만 최대 20개. 모르면 짧게 답하세요.`
+확신 있는 곳 최대 35개. 모르면 짧게 답하세요.`
 
   for (const modelName of MODEL_CHAIN) {
     try {
