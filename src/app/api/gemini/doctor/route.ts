@@ -26,8 +26,17 @@ export async function POST(request: Request) {
       systemInstruction: SYSTEM_PROMPT,
     })
 
+    // 마지막 메시지(사용자 질문)는 sendMessage로 보내고 나머지는 history
     const recentMessages = messages.slice(-6)
-    const history = recentMessages.slice(0, -1).map((m: { role: string; content: string }) => ({
+    let historyMessages = recentMessages.slice(0, -1)
+    // Gemini는 history의 첫 메시지가 반드시 'user' 역할이어야 함
+    const firstUserIdx = historyMessages.findIndex((m: any) => m.role === 'user')
+    if (firstUserIdx === -1) {
+      historyMessages = []
+    } else {
+      historyMessages = historyMessages.slice(firstUserIdx)
+    }
+    const history = historyMessages.map((m: { role: string; content: string }) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.content }],
     }))
