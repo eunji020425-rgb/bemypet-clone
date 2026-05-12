@@ -1,4 +1,4 @@
-import RouteMap from './RouteMap'
+﻿import RouteMap from './RouteMap'
 import { Navigation } from 'lucide-react'
 import Link from 'next/link'
 
@@ -18,7 +18,7 @@ export default async function RoutePage({
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
         <p className="text-[#888]">잘못된 접근입니다.</p>
-        <Link href="/walk" className="text-[#f5c518] font-bold hover:underline mt-2 inline-block">
+        <Link href="/walk" className="text-[#5a7a3a] font-bold hover:underline mt-2 inline-block">
           돌아가기
         </Link>
       </div>
@@ -39,9 +39,9 @@ export default async function RoutePage({
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <Navigation className="text-[#f5c518]" size={20} />
-        <Link href={backHref} className="text-sm text-[#888] hover:text-[#f5c518]">← {backLabel}</Link>
-        <h1 className="text-lg font-bold text-[#2d2d2d] ml-2">{name}까지 길찾기</h1>
+        <Navigation className="text-[#5a7a3a]" size={20} />
+        <Link href={backHref} className="text-sm text-[#888] hover:text-[#5a7a3a]">← {backLabel}</Link>
+        <h1 className="text-lg font-bold text-[#2d3a22] ml-2">{name}까지 길찾기</h1>
       </div>
       <RouteMap name={name} dstLat={lat} dstLng={lng} addr={addr} />
     </div>

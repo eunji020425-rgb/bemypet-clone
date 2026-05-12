@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Heart, MessageCircle, PenSquare } from 'lucide-react'
@@ -17,11 +17,11 @@ export default async function CommunityPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[#2d2d2d]">자유게시판</h1>
+        <h1 className="text-xl font-bold text-[#2d3a22]">자유게시판</h1>
         {user && (
           <Link
             href="/community/write"
-            className="flex items-center gap-1 bg-[#f5c518] hover:bg-[#e0b010] text-white text-sm font-bold px-4 py-2 rounded-full transition-colors"
+            className="flex items-center gap-1 bg-[#5a7a3a] hover:bg-[#1a2310] text-white text-sm font-bold px-4 py-2 rounded-full transition-colors"
           >
             <PenSquare size={14} />
             글쓰기
@@ -41,10 +41,10 @@ export default async function CommunityPage() {
             <Link
               key={post.id}
               href={`/community/${post.id}`}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-[#ececec] hover:border-[#f5c518] transition-colors"
+              className="bg-white rounded-2xl p-5 shadow-sm border border-[#e8e3d0] hover:border-[#5a7a3a] transition-colors"
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <h2 className="font-medium text-[#2d2d2d] text-sm line-clamp-2 flex-1">{post.title}</h2>
+                <h2 className="font-medium text-[#2d3a22] text-sm line-clamp-2 flex-1">{post.title}</h2>
                 {post.image_url && (
                   <img src={post.image_url} alt="" className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
                 )}

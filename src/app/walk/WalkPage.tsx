@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { Navigation, ExternalLink } from 'lucide-react'
@@ -237,7 +237,7 @@ export default function WalkPage() {
         <button
           onClick={locate}
           disabled={loading}
-          className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#e0b010] text-white px-5 py-2 rounded-full text-sm font-bold transition disabled:opacity-60"
+          className="flex items-center gap-2 bg-[#5a7a3a] hover:bg-[#1a2310] text-white px-5 py-2 rounded-full text-sm font-bold transition disabled:opacity-60"
         >
           <Navigation size={15} />
           {loading ? '검색 중...' : '내 위치로 추천받기'}
@@ -275,7 +275,7 @@ export default function WalkPage() {
 
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="lg:w-3/5 relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#e8e3d0]" style={{ height: '550px' }} />
           {showResearchBtn && (
             <button
               onClick={() => {
@@ -288,7 +288,7 @@ export default function WalkPage() {
                 recommend(c.lat, c.lng, rect)
               }}
               disabled={loading}
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
             >
               <Navigation size={14} />
               이 지역에서 다시 검색
@@ -317,13 +317,13 @@ export default function WalkPage() {
                   mapInstanceRef.current?.setView([t.lat, t.lng], 16)
                   markersRef.current[i + 1]?.openPopup()
                 }}
-                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#f5c518] shadow-md' : 'border-[#ececec] hover:border-[#22c55e]'}`}
+                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#5a7a3a] shadow-md' : 'border-[#e8e3d0] hover:border-[#22c55e]'}`}
               >
                 <div className="flex items-start gap-2">
                   <div className="w-7 h-7 rounded-full bg-green-300 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-[#2d2d2d] truncate flex-1">{t.name}</p>
+                      <p className="text-sm font-bold text-[#2d3a22] truncate flex-1">{t.name}</p>
                       <span className="text-xs text-[#22c55e] font-medium flex-shrink-0">
                         {t.distance < 1 ? `${Math.round(t.distance * 1000)}m` : `${t.distance.toFixed(1)}km`}
                       </span>
@@ -362,7 +362,7 @@ export default function WalkPage() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className="font-bold text-[#2d2d2d]">🐾 {selected.name}</h3>
+                <h3 className="font-bold text-[#2d3a22]">🐾 {selected.name}</h3>
                 {selected.difficulty && (
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[selected.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
                     {selected.difficulty}
@@ -385,21 +385,21 @@ export default function WalkPage() {
                 <p className="text-sm text-[#aaa] italic mt-2">AI가 산책 정보를 분석 중입니다...</p>
               )}
               {selected.tip && (
-                <div className="mt-3 bg-white rounded-lg px-3 py-2 text-xs text-[#7a6000] border border-yellow-200">
+                <div className="mt-3 bg-white rounded-lg px-3 py-2 text-xs text-[#5a7a3a] border border-yellow-200">
                   💡 <strong>산책 팁:</strong> {selected.tip}
                 </div>
               )}
               {selected.features && selected.features.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {selected.features.map((f, j) => (
-                    <span key={j} className="text-xs bg-white px-2 py-0.5 rounded-full text-[#666] border border-[#ececec]">{f}</span>
+                    <span key={j} className="text-xs bg-white px-2 py-0.5 rounded-full text-[#666] border border-[#e8e3d0]">{f}</span>
                   ))}
                 </div>
               )}
               <div className="flex gap-3 mt-3">
                 <a
                   href={`/route?from=walk&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
-                  className="bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
+                  className="bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
                 >
                   <Navigation size={13} />앱에서 길찾기
                 </a>

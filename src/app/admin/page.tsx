@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AdminDashboard from './AdminDashboard'
 import Link from 'next/link'
@@ -23,9 +23,9 @@ export default async function AdminPage() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
         <div className="text-5xl mb-4">🔒</div>
-        <h1 className="text-xl font-bold text-[#2d2d2d] mb-2">접근 권한이 없습니다</h1>
+        <h1 className="text-xl font-bold text-[#2d3a22] mb-2">접근 권한이 없습니다</h1>
         <p className="text-sm text-[#888] mb-6">이 페이지는 관리자 전용입니다.</p>
-        <Link href="/" className="text-[#f5c518] font-bold hover:underline">
+        <Link href="/" className="text-[#5a7a3a] font-bold hover:underline">
           홈으로 돌아가기
         </Link>
       </div>

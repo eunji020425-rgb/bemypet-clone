@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -94,7 +94,7 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-[#ececec] flex flex-col" style={{ height: '70vh' }}>
+    <div className="bg-white rounded-2xl shadow-sm border border-[#e8e3d0] flex flex-col" style={{ height: '70vh' }}>
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {messages.length === 0 && (
@@ -111,7 +111,7 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
             <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
               {/* 아바타 (내 메시지는 숨김) */}
               {!isMe && (
-                <div className={`w-7 h-7 rounded-full bg-[#f5e97a] flex items-center justify-center text-xs font-bold text-[#7a6a00] flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
+                <div className={`w-7 h-7 rounded-full bg-[#d4e8b0] flex items-center justify-center text-xs font-bold text-[#5a7a3a] flex-shrink-0 ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
                   {msg.profiles?.nickname?.[0] ?? '?'}
                 </div>
               )}
@@ -124,8 +124,8 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
                   <div
                     className={`px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                       isMe
-                        ? 'bg-[#f5c518] text-white rounded-tr-sm'
-                        : 'bg-[#f5f5f5] text-[#2d2d2d] rounded-tl-sm'
+                        ? 'bg-[#5a7a3a] text-white rounded-tr-sm'
+                        : 'bg-[#f5f5f5] text-[#2d3a22] rounded-tl-sm'
                     }`}
                   >
                     {msg.content}
@@ -140,7 +140,7 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
       </div>
 
       {/* 입력창 */}
-      <div className="border-t border-[#ececec] px-4 py-3">
+      <div className="border-t border-[#e8e3d0] px-4 py-3">
         <form onSubmit={handleSend} className="flex gap-2">
           <input
             type="text"
@@ -148,20 +148,20 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
             value={text}
             onChange={e => setText(e.target.value)}
             disabled={!userId}
-            className="flex-1 border border-[#ececec] rounded-full px-4 py-2 text-sm outline-none focus:border-[#f5c518] disabled:bg-gray-50"
+            className="flex-1 border border-[#e8e3d0] rounded-full px-4 py-2 text-sm outline-none focus:border-[#5a7a3a] disabled:bg-gray-50"
             maxLength={500}
           />
           <button
             type="submit"
             disabled={loading || !userId || !text.trim()}
-            className="bg-[#f5c518] hover:bg-[#e0b010] text-white rounded-full p-2.5 transition disabled:opacity-40"
+            className="bg-[#5a7a3a] hover:bg-[#1a2310] text-white rounded-full p-2.5 transition disabled:opacity-40"
           >
             <Send size={16} />
           </button>
         </form>
         {!userId && (
           <p className="text-xs text-center text-[#aaa] mt-2">
-            <a href="/auth/login" className="text-[#f5c518] hover:underline">로그인</a>하고 채팅에 참여하세요
+            <a href="/auth/login" className="text-[#5a7a3a] hover:underline">로그인</a>하고 채팅에 참여하세요
           </p>
         )}
       </div>

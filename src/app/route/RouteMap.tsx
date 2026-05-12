@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { Footprints, Clock, Route as RouteIcon, AlertCircle, ExternalLink, MapPin, ChevronRight } from 'lucide-react'
@@ -98,7 +98,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
     if (routeData && routeData.geometry.length > 0) {
       const latlngs = routeData.geometry
       L.polyline(latlngs, {
-        color: '#f5c518',
+        color: '#5a7a3a',
         weight: 6,
         opacity: 0.85,
         lineCap: 'round',
@@ -173,8 +173,8 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
           onClick={() => switchMode('foot')}
           className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold transition ${
             mode === 'foot'
-              ? 'bg-[#f5c518] text-white'
-              : 'bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518]'
+              ? 'bg-[#5a7a3a] text-white'
+              : 'bg-white border border-[#e8e3d0] text-[#666] hover:border-[#5a7a3a]'
           }`}
         >
           🚶 도보
@@ -183,8 +183,8 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
           onClick={() => switchMode('car')}
           className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold transition ${
             mode === 'car'
-              ? 'bg-[#f5c518] text-white'
-              : 'bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518]'
+              ? 'bg-[#5a7a3a] text-white'
+              : 'bg-white border border-[#e8e3d0] text-[#666] hover:border-[#5a7a3a]'
           }`}
         >
           🚗 자동차
@@ -193,7 +193,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
           href={transitUrl}
           target="_blank"
           rel="noopener"
-          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518] transition"
+          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-white border border-[#e8e3d0] text-[#666] hover:border-[#5a7a3a] transition"
         >
           🚌 카카오 대중교통 <ExternalLink size={12} />
         </a>
@@ -201,7 +201,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
           href={naverTransitUrl}
           target="_blank"
           rel="noopener"
-          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518] transition"
+          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-white border border-[#e8e3d0] text-[#666] hover:border-[#5a7a3a] transition"
         >
           🚇 네이버 대중교통 <ExternalLink size={12} />
         </a>
@@ -218,14 +218,14 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
         </div>
       )}
       {route && (
-        <div className="bg-white border border-[#ececec] rounded-2xl p-4 flex items-center gap-6 shadow-sm flex-wrap">
+        <div className="bg-white border border-[#e8e3d0] rounded-2xl p-4 flex items-center gap-6 shadow-sm flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-[#fef3c7] flex items-center justify-center">
               <RouteIcon size={18} className="text-[#92400e]" />
             </div>
             <div>
               <p className="text-xs text-[#aaa]">총 거리</p>
-              <p className="text-base font-bold text-[#2d2d2d]">{formatDistance(route.distance)}</p>
+              <p className="text-base font-bold text-[#2d3a22]">{formatDistance(route.distance)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
             </div>
             <div>
               <p className="text-xs text-[#aaa]">예상 시간</p>
-              <p className="text-base font-bold text-[#2d2d2d]">{formatDuration(route.duration)}</p>
+              <p className="text-base font-bold text-[#2d3a22]">{formatDuration(route.duration)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 ml-auto">
@@ -243,7 +243,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
             </div>
             <div>
               <p className="text-xs text-[#aaa]">목적지</p>
-              <p className="text-sm font-bold text-[#2d2d2d] truncate max-w-[200px]">{name}</p>
+              <p className="text-sm font-bold text-[#2d3a22] truncate max-w-[200px]">{name}</p>
             </div>
           </div>
         </div>
@@ -252,13 +252,13 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 지도 */}
         <div className="lg:w-3/5">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#e8e3d0]" style={{ height: '550px' }} />
         </div>
 
         {/* 턴바이턴 안내 */}
-        <div className="lg:w-2/5 bg-white border border-[#ececec] rounded-2xl p-4 overflow-y-auto" style={{ maxHeight: '550px' }}>
-          <h3 className="text-sm font-bold text-[#2d2d2d] mb-3 flex items-center gap-2">
-            <MapPin size={16} className="text-[#f5c518]" />
+        <div className="lg:w-2/5 bg-white border border-[#e8e3d0] rounded-2xl p-4 overflow-y-auto" style={{ maxHeight: '550px' }}>
+          <h3 className="text-sm font-bold text-[#2d3a22] mb-3 flex items-center gap-2">
+            <MapPin size={16} className="text-[#5a7a3a]" />
             상세 길찾기 ({mode === 'foot' ? '도보' : '자동차'})
           </h3>
           {!route && !loading && (
@@ -272,7 +272,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
               <li
                 key={i}
                 onClick={() => focusStep(step)}
-                className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-[#fffbee] cursor-pointer transition"
+                className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-[#f5f7e8] cursor-pointer transition"
               >
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                   i === 0 ? 'bg-blue-100 text-blue-700' :
@@ -282,7 +282,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
                   {i === 0 ? '출발' : i === route.steps.length - 1 ? '도착' : i}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#2d2d2d] leading-snug">{step.instruction || '이동'}</p>
+                  <p className="text-sm text-[#2d3a22] leading-snug">{step.instruction || '이동'}</p>
                   {(step.distance > 0 || step.duration > 0) && (
                     <p className="text-xs text-[#aaa] mt-0.5">
                       {step.distance > 0 && formatDistance(step.distance)}

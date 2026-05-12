@@ -1,12 +1,12 @@
-import HospitalMap from './HospitalMap'
+﻿import HospitalMap from './HospitalMap'
 import { MapPin } from 'lucide-react'
 
 export default function HospitalPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center gap-2 mb-6">
-        <MapPin className="text-[#f5c518]" size={22} />
-        <h1 className="text-xl font-bold text-[#2d2d2d]">동물병원 찾기</h1>
+        <MapPin className="text-[#5a7a3a]" size={22} />
+        <h1 className="text-xl font-bold text-[#2d3a22]">동물병원 찾기</h1>
         <span className="text-xs text-[#aaa] ml-1">현재 위치 기반 근처 동물병원</span>
       </div>
       <HospitalMap />

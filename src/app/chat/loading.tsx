@@ -1,8 +1,8 @@
-export default function ChatLoading() {
+﻿export default function ChatLoading() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="h-7 w-40 bg-gray-200 rounded-lg animate-pulse mb-4" />
-      <div className="bg-white rounded-2xl border border-[#ececec] flex flex-col" style={{ height: '70vh' }}>
+      <div className="bg-white rounded-2xl border border-[#e8e3d0] flex flex-col" style={{ height: '70vh' }}>
         <div className="flex-1 px-4 py-4 flex flex-col gap-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className={`flex gap-2 ${i % 2 === 0 ? '' : 'flex-row-reverse'}`}>
@@ -11,7 +11,7 @@ export default function ChatLoading() {
             </div>
           ))}
         </div>
-        <div className="border-t border-[#ececec] px-4 py-3">
+        <div className="border-t border-[#e8e3d0] px-4 py-3">
           <div className="h-10 bg-gray-100 rounded-full animate-pulse" />
         </div>
       </div>

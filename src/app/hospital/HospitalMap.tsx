@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { Phone, Navigation, ExternalLink } from 'lucide-react'
@@ -201,7 +201,7 @@ export default function HospitalMap() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 지도 */}
         <div className="lg:w-3/5 relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#e8e3d0]" style={{ height: '550px' }} />
           {showResearchBtn && (
             <button
               onClick={() => {
@@ -214,7 +214,7 @@ export default function HospitalMap() {
                 fetchHospitals(c.lat, c.lng, rect).then(items => initMap(c.lat, c.lng, items))
               }}
               disabled={loading}
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
             >
               <Navigation size={14} />
               이 지역에서 다시 검색
@@ -244,15 +244,15 @@ export default function HospitalMap() {
                   mapInstanceRef.current?.setView([h.lat, h.lng], 16)
                   markersRef.current[i + 1]?.openPopup()
                 }}
-                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#f5c518] shadow-md' : 'border-[#ececec] hover:border-[#f5c518]'}`}
+                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#5a7a3a] shadow-md' : 'border-[#e8e3d0] hover:border-[#5a7a3a]'}`}
               >
                 <div className="flex items-start gap-2">
                   <div className="w-7 h-7 rounded-full bg-red-300 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-[#2d2d2d] truncate">{h.name}</p>
+                      <p className="text-sm font-bold text-[#2d3a22] truncate">{h.name}</p>
                       {h.distance !== undefined && (
-                        <span className="text-xs text-[#f5c518] font-medium flex-shrink-0">
+                        <span className="text-xs text-[#5a7a3a] font-medium flex-shrink-0">
                           {h.distance < 1 ? `${Math.round(h.distance * 1000)}m` : `${h.distance.toFixed(1)}km`}
                         </span>
                       )}
@@ -273,21 +273,21 @@ export default function HospitalMap() {
 
       {/* 선택 병원 상세 */}
       {selected && (
-        <div className="bg-[#fffbee] border border-[#f5c518] rounded-2xl p-4">
+        <div className="bg-[#f5f7e8] border border-[#5a7a3a] rounded-2xl p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <h3 className="font-bold text-[#2d2d2d]">🐾 {selected.name}</h3>
+              <h3 className="font-bold text-[#2d3a22]">🐾 {selected.name}</h3>
               {selected.category && <p className="text-xs text-[#aaa] mt-0.5">{selected.category}</p>}
               {selected.address && <p className="text-sm text-[#666] mt-1">{selected.address}</p>}
               <div className="flex flex-wrap gap-3 mt-3 items-center">
                 <a
                   href={`/route?from=hospital&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
-                  className="bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
+                  className="bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
                 >
                   <Navigation size={13} />앱에서 길찾기
                 </a>
                 {selected.phone && (
-                  <a href={`tel:${selected.phone}`} className="text-sm text-[#f5c518] font-bold flex items-center gap-1">
+                  <a href={`tel:${selected.phone}`} className="text-sm text-[#5a7a3a] font-bold flex items-center gap-1">
                     <Phone size={13} />{selected.phone}
                   </a>
                 )}
