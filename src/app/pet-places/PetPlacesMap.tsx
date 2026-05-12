@@ -19,6 +19,20 @@ interface Place {
   distance?: number
   link?: string
   rawCategory?: string
+  // Gemini 보강 정보
+  vaccination?: string
+  carrierRequired?: boolean
+  diningArea?: string
+  sizeLimit?: string
+  hasOutdoorPlayground?: boolean
+  grassType?: string
+  playgroundSize?: string
+  sizeSeparation?: boolean
+  feeInfo?: string
+  hours?: string
+  rules?: string[]
+  summary?: string
+  enriching?: boolean
 }
 
 const COLORS: Record<Category, { pin: string; badge: string; emoji: string; label: string }> = {
@@ -48,6 +62,67 @@ export default function PetPlacesMap() {
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
   const [locError, setLocError] = useState('')
   const [showResearchBtn, setShowResearchBtn] = useState(false)
+  const [enriching, setEnriching] = useState(false)
+
+  const enrichWithGemini = async (items: Place[]) => {
+    if (items.length === 0) return
+    setEnriching(true)
+    try {
+      const res = await fetch('/api/gemini/pet-places', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ places: items }),
+      })
+      const data = await res.json()
+      const enrichments = data.enrichments || []
+      setPlaces(prev =>
+        prev.map((p, i) => {
+          const e = enrichments[i]
+          if (!e) return { ...p, enriching: false }
+          return {
+            ...p,
+            vaccination: e.vaccination,
+            carrierRequired: e.carrierRequired,
+            diningArea: e.diningArea,
+            sizeLimit: e.sizeLimit,
+            hasOutdoorPlayground: e.hasOutdoorPlayground,
+            grassType: e.grassType,
+            playgroundSize: e.playgroundSize,
+            sizeSeparation: e.sizeSeparation,
+            feeInfo: e.feeInfo,
+            hours: e.hours,
+            rules: Array.isArray(e.rules) ? e.rules : [],
+            summary: e.summary,
+            enriching: false,
+          }
+        })
+      )
+      setSelected(prev => {
+        if (!prev) return prev
+        const idx = items.findIndex(it => it.id === prev.id)
+        if (idx === -1) return prev
+        const e = enrichments[idx]
+        if (!e) return prev
+        return {
+          ...prev,
+          vaccination: e.vaccination,
+          carrierRequired: e.carrierRequired,
+          diningArea: e.diningArea,
+          sizeLimit: e.sizeLimit,
+          hasOutdoorPlayground: e.hasOutdoorPlayground,
+          grassType: e.grassType,
+          playgroundSize: e.playgroundSize,
+          sizeSeparation: e.sizeSeparation,
+          feeInfo: e.feeInfo,
+          hours: e.hours,
+          rules: Array.isArray(e.rules) ? e.rules : [],
+          summary: e.summary,
+        }
+      })
+    } finally {
+      setEnriching(false)
+    }
+  }
 
   const fetchPlaces = async (lat: number, lng: number, rect?: string) => {
     setLoading(true)
@@ -59,8 +134,10 @@ export default function PetPlacesMap() {
         : `lat=${lat}&lng=${lng}`
       const res = await fetch(`/api/pet-places?${params}`)
       const data = await res.json()
-      const items: Place[] = data.places || []
+      const items: Place[] = (data.places || []).map((p: Place) => ({ ...p, enriching: true }))
       setPlaces(items)
+      // 백그라운드에서 Gemini 정보 보강
+      enrichWithGemini(items)
       return items
     } finally {
       setLoading(false)
@@ -225,6 +302,14 @@ export default function PetPlacesMap() {
         </div>
       )}
 
+      {/* AI 분석 진행 표시 */}
+      {enriching && (
+        <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2 text-xs text-purple-700 flex items-center gap-2">
+          <span className="inline-block w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+          AI가 각 장소의 규정 정보를 분석 중입니다...
+        </div>
+      )}
+
       {/* 카테고리 필터 탭 */}
       <div className="flex gap-2 flex-wrap">
         <button
@@ -329,12 +414,38 @@ export default function PetPlacesMap() {
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${info.badge}`}>
                         {info.label}
                       </span>
-                      {p.address && <span className="text-xs text-[#888] truncate">{p.address}</span>}
+                      {p.hasOutdoorPlayground && p.category !== 'playground' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-green-50 text-green-700 border-green-200">
+                          🌳 야외 운동장
+                        </span>
+                      )}
+                      {p.category === 'playground' && p.grassType && p.grassType !== '해당없음' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-green-50 text-green-700 border-green-200">
+                          🌱 {p.grassType}
+                        </span>
+                      )}
+                      {p.vaccination === '필수' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-red-50 text-red-700 border-red-200">
+                          💉 접종 필수
+                        </span>
+                      )}
+                      {p.diningArea === '외부석만' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-amber-50 text-amber-700 border-amber-200">
+                          🌤 외부석만
+                        </span>
+                      )}
                     </div>
+                    {p.address && <p className="text-xs text-[#888] truncate mt-1">{p.address}</p>}
+                    {p.summary && (
+                      <p className="text-xs text-[#444] mt-1 italic line-clamp-2">💡 {p.summary}</p>
+                    )}
+                    {p.enriching && !p.summary && (
+                      <p className="text-xs text-[#bbb] italic mt-1">AI 규정 분석 중...</p>
+                    )}
                     {p.phone && (
                       <p className="text-xs text-[#aaa] flex items-center gap-1 mt-1">
                         <Phone size={10} />{p.phone}
@@ -361,6 +472,108 @@ export default function PetPlacesMap() {
               </div>
               {selected.rawCategory && <p className="text-xs text-[#aaa] mt-0.5">{selected.rawCategory}</p>}
               {selected.address && <p className="text-sm text-[#666] mt-1">{selected.address}</p>}
+
+              {/* AI 분석 규정 정보 */}
+              {selected.summary && (
+                <div className="mt-3 bg-white rounded-lg border border-[#fde68a] p-3">
+                  <p className="text-xs font-bold text-[#7a6000] mb-2">💡 AI 분석 정보</p>
+                  <p className="text-sm text-[#444] mb-2">{selected.summary}</p>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                    {selected.vaccination && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">💉 접종증:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.vaccination}</span>
+                      </div>
+                    )}
+                    {selected.carrierRequired !== undefined && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">🎒 이동가방:</span>
+                        <span className="font-medium text-[#2d2d2d]">
+                          {selected.carrierRequired ? '필수' : '불필요'}
+                        </span>
+                      </div>
+                    )}
+                    {selected.diningArea && selected.diningArea !== '해당없음' && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">🪑 동반 구역:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.diningArea}</span>
+                      </div>
+                    )}
+                    {selected.sizeLimit && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">🐕 크기 제한:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.sizeLimit}</span>
+                      </div>
+                    )}
+                    {selected.hasOutdoorPlayground && selected.category !== 'playground' && (
+                      <div className="flex items-center gap-1 col-span-2">
+                        <span className="text-[#aaa]">🌳 야외 운동장:</span>
+                        <span className="font-medium text-green-700">있을 가능성 높음</span>
+                      </div>
+                    )}
+                    {selected.grassType && selected.grassType !== '해당없음' && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">🌱 잔디:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.grassType}</span>
+                      </div>
+                    )}
+                    {selected.playgroundSize && selected.playgroundSize !== '해당없음' && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">📐 운동장 크기:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.playgroundSize}</span>
+                      </div>
+                    )}
+                    {selected.sizeSeparation !== undefined && selected.category === 'playground' && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">🔀 대소형견 분리:</span>
+                        <span className="font-medium text-[#2d2d2d]">
+                          {selected.sizeSeparation ? '있음' : '없음'}
+                        </span>
+                      </div>
+                    )}
+                    {selected.feeInfo && selected.feeInfo !== '해당없음' && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">💰 이용료:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.feeInfo}</span>
+                      </div>
+                    )}
+                    {selected.hours && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-[#aaa]">🕐 운영시간:</span>
+                        <span className="font-medium text-[#2d2d2d]">{selected.hours}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {selected.rules && selected.rules.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-[#fde68a]">
+                      <p className="text-xs font-bold text-[#7a6000] mb-1">📋 규정·안내</p>
+                      <ul className="text-xs text-[#444] space-y-0.5">
+                        {selected.rules.map((r, i) => (
+                          <li key={i} className="flex items-start gap-1">
+                            <span className="text-[#aaa]">•</span>
+                            <span>{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-[#aaa] mt-2 italic">
+                    * AI 추정 정보이므로 방문 전 전화로 확인하세요.
+                  </p>
+                </div>
+              )}
+              {!selected.summary && selected.enriching && (
+                <div className="mt-3 bg-white rounded-lg border border-[#ececec] p-3">
+                  <p className="text-xs text-[#aaa] italic flex items-center gap-2">
+                    <span className="inline-block w-3 h-3 border-2 border-[#f5c518] border-t-transparent rounded-full animate-spin" />
+                    AI가 규정 정보를 분석 중입니다...
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-3 mt-3 items-center">
                 <a
                   href={`/route?from=pet-places&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}

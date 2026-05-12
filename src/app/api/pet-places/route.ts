@@ -15,9 +15,18 @@ interface Place {
 }
 
 const CATEGORY_QUERIES: Record<string, { label: string; queries: string[] }> = {
-  restaurant: { label: '식당', queries: ['애견동반 식당', '반려동물 동반 식당'] },
-  cafe: { label: '카페', queries: ['애견카페', '애견동반 카페'] },
-  playground: { label: '운동장', queries: ['애견운동장', '반려견놀이터', '강아지 운동장'] },
+  restaurant: {
+    label: '식당',
+    queries: ['애견동반 식당', '반려동물 동반 식당', '강아지 동반 음식점'],
+  },
+  cafe: {
+    label: '카페',
+    queries: ['애견카페', '애견동반 카페', '도그카페', '강아지 카페', '반려견 카페'],
+  },
+  playground: {
+    label: '운동장',
+    queries: ['애견운동장', '반려견놀이터', '강아지 운동장', '도그파크', '독파크'],
+  },
 }
 
 async function kakaoSearch(opts: {
