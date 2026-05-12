@@ -46,8 +46,8 @@ export default function Header() {
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/65 border-b border-white/50">
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="text-2xl tracking-tight" style={{ fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.5px' }}>
-          <span className="text-[#2a3a55]">pet</span><span className="italic text-[#3a7ab8]">together</span>
+        <Link href="/" className="text-xl font-bold tracking-tight" style={{ letterSpacing: '-0.5px' }}>
+          <span className="text-[#2a3a55]">펫</span><span className="text-[#3a7ab8]">투게더</span>
         </Link>
 
         {/* 데스크탑 메뉴 */}

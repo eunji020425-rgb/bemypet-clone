@@ -6,10 +6,10 @@ export default function HomePage() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* 히어로 섹션 */}
       <section className="text-center py-12">
-        <p className="text-xs text-[#3a7ab8] font-semibold tracking-[3px] uppercase">— welcome —</p>
-        <h1 className="mt-4 text-[#2a3a55] leading-[1.05] tracking-[-1.5px]" style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(36px, 6vw, 56px)' }}>
-          a calm space<br/>
-          for you and your <span className="italic text-[#3a7ab8]">pet</span>
+        <p className="text-xs text-[#3a7ab8] font-semibold tracking-[3px]">— 환영합니다 —</p>
+        <h1 className="mt-4 text-[#2a3a55] leading-[1.15] tracking-[-1.5px]" style={{ fontSize: 'clamp(34px, 5.5vw, 52px)', fontWeight: 700 }}>
+          너와 나를 위한<br/>
+          <span className="text-[#3a7ab8]">평온한 공간</span>
         </h1>
         <p className="mt-6 text-[#6a7c95] text-sm leading-relaxed max-w-md mx-auto">
           반려동물과 함께하는 모든 순간을<br/>
@@ -66,19 +66,19 @@ export default function HomePage() {
       {/* 메인 카드 - 통합 지도 추천 */}
       <Link href="/map" className="block">
         <section className="mt-6 backdrop-blur-xl bg-white/65 border border-white/50 rounded-3xl p-7 hover:bg-white/75 transition-colors">
-          <p className="text-[10px] text-[#3a7ab8] tracking-[2px] uppercase font-semibold">— today —</p>
-          <h3 className="mt-2 text-2xl text-[#2a3a55] leading-tight tracking-[-0.5px]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-            perfect day <span className="italic text-[#3a7ab8]">for a walk</span>
+          <p className="text-[11px] text-[#3a7ab8] tracking-[2px] font-semibold">— 오늘 —</p>
+          <h3 className="mt-2 text-2xl text-[#2a3a55] leading-tight tracking-[-0.5px] font-bold">
+            산책하기 <span className="text-[#3a7ab8]">좋은 날</span>
           </h3>
           <p className="mt-2 text-xs text-[#6a7c95]">근처 산책로·카페·동물병원을 한눈에 보세요</p>
           <div className="mt-4 flex gap-3">
             <div className="flex-1 bg-white/60 rounded-2xl px-4 py-3">
-              <p className="text-lg text-[#2a3a55]" style={{ fontFamily: "'DM Serif Display', serif" }}>23°C</p>
-              <p className="text-[10px] text-[#6a7c95] uppercase tracking-wider mt-0.5">맑음</p>
+              <p className="text-lg text-[#2a3a55] font-bold">23°C</p>
+              <p className="text-[11px] text-[#6a7c95] tracking-wider mt-0.5">맑음</p>
             </div>
             <div className="flex-1 bg-white/60 rounded-2xl px-4 py-3">
-              <p className="text-lg text-[#2a3a55]" style={{ fontFamily: "'DM Serif Display', serif" }}>4 spots</p>
-              <p className="text-[10px] text-[#6a7c95] uppercase tracking-wider mt-0.5">추천 장소</p>
+              <p className="text-lg text-[#2a3a55] font-bold">4곳</p>
+              <p className="text-[11px] text-[#6a7c95] tracking-wider mt-0.5">추천 장소</p>
             </div>
           </div>
         </section>
@@ -87,10 +87,10 @@ export default function HomePage() {
       {/* 자유게시판 미리보기 */}
       <section className="mt-10">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-2xl text-[#2a3a55] tracking-[-0.5px]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-            recent <span className="italic text-[#3a7ab8]">posts</span>
+          <h2 className="text-2xl text-[#2a3a55] tracking-[-0.5px] font-bold">
+            최근 <span className="text-[#3a7ab8]">게시글</span>
           </h2>
-          <Link href="/community" className="text-xs text-[#3a7ab8] font-semibold hover:underline">view all →</Link>
+          <Link href="/community" className="text-xs text-[#3a7ab8] font-semibold hover:underline">전체보기 →</Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
@@ -126,11 +126,11 @@ export default function HomePage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-[#3a7ab8] tracking-[2px] uppercase font-semibold mb-2">— explore —</p>
-              <h3 className="text-xl text-[#2a3a55] tracking-[-0.5px]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-                find your favorite spot
+              <p className="text-[11px] text-[#3a7ab8] tracking-[2px] font-semibold mb-2">— 둘러보기 —</p>
+              <h3 className="text-xl text-[#2a3a55] tracking-[-0.5px] font-bold">
+                우리만의 산책 코스 찾기
               </h3>
-              <p className="text-xs text-[#2a3a55]/70 mt-1">근처 산책로·도그카페·동물병원</p>
+              <p className="text-xs text-[#2a3a55]/70 mt-1">근처 산책로 · 도그카페 · 동물병원</p>
             </div>
             <Footprints size={32} className="text-[#3a7ab8]" />
           </div>
