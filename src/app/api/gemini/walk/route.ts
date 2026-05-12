@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+const MODEL_CHAIN = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+
 export async function POST(request: Request) {
   try {
     const { parks, petType } = await request.json()
@@ -14,10 +16,6 @@ export async function POST(request: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' },
-    })
 
     const prompt = `한국의 ${petType || '강아지'} 산책 전문가로서 다음 공원 ${parks.length}곳을 평가해주세요.
 
@@ -34,8 +32,31 @@ export async function POST(request: Request) {
 장소:
 ${parks.map((p: any, i: number) => `${i + 1}. ${p.name} (${p.address})`).join('\n')}`
 
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+    // 모델 폴백 체인 시도
+    let text = ''
+    for (const modelName of MODEL_CHAIN) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: { responseMimeType: 'application/json' },
+        })
+        const result = await model.generateContent(prompt)
+        text = result.response.text()
+        break
+      } catch (e: any) {
+        const msg = String(e?.message || '')
+        if (msg.includes('429') || msg.includes('quota') || msg.includes('503') || msg.includes('overloaded')) {
+          console.log(`[walk] ${modelName} unavailable, trying next...`)
+          continue
+        }
+        throw e
+      }
+    }
+
+    if (!text) {
+      return NextResponse.json({ enrichments: [] })
+    }
+
     let enrichments: any[] = []
     try {
       const parsed = JSON.parse(text)
