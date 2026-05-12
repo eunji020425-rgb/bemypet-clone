@@ -25,17 +25,15 @@ export async function POST(request: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey)
 
-    const prompt = `2026년 현재 한국 애견 동반 장소 ${places.length}곳을 평가하세요.
+    const prompt = `2026년 현재 한국 애견 동반 장소 ${places.length}곳의 규정을 추정하세요.
+
+※ 모든 장소는 이미 "애견동반/도그카페/도그파크" 등 반려동물 친화 키워드로 검색된 결과이므로 기본적으로 동반 가능 장소로 간주하세요.
 
 ${places.map((p: any, i: number) => `${i + 1}. ${p.name} [${p.categoryLabel}] ${p.address || ''} / 카카오카테고리: ${p.rawCategory || ''}`).join('\n')}
 
-각 장소가:
-1. 실제로 반려동물 동반이 가능한 업종인지 (장소명·카테고리로 판단)
-2. 일반적인 동반 규정
-
 입력 순서대로 JSON 배열로:
 [{
-  "petFriendly": "가능|조건부|불가" (불가: 일반 식당/병원/사무실/마트 등 동반 불가능 업종, 조건부: 외부석만 등 일부만 가능, 가능: 전체 동반 OK),
+  "petFriendly": "가능|조건부|불가",
   "vaccination": "필수|권장|불필요|확인필요",
   "carrierRequired": true/false,
   "diningArea": "전체|외부석만|특정구역만|해당없음",
@@ -50,12 +48,12 @@ ${places.map((p: any, i: number) => `${i + 1}. ${p.name} [${p.categoryLabel}] ${
   "summary": "한줄 요약"
 }]
 
-petFriendly 판단 가이드 (엄격하게):
-- 이름/카테고리가 일반 음식점·일반 카페·병원·약국·세탁소·마트 → "불가"
-- 도그카페·애견동반카페·애견동반식당·도그파크·애견운동장·펜션 → "가능"
-- 키즈카페·일반음식점인데 외부석에서만 가능하다고 알려진 곳 → "조건부"
+petFriendly 판단 (관대하게):
+- 기본값: "가능" (검색 결과이므로 신뢰)
+- "조건부": 일반 음식점 카테고리지만 외부석/특정 구역만 가능한 곳
+- "불가": 명확히 동반 불가가 확실한 곳만 (예: 약국, 종합병원, 마트, 은행, 일반 사무실 등 펫과 무관한 업종)
 
-JSON 배열만 반환.`
+확신 없으면 "가능" 또는 "조건부"로. JSON 배열만 반환.`
 
     let text = ''
     for (const modelName of MODEL_CHAIN) {

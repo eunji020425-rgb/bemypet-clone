@@ -93,8 +93,14 @@ export default function PetPlacesMap() {
           enriching: false,
         }
       })
-      // petFriendly === '불가' 항목 제거
-      const filtered = updated.filter(p => p.petFriendly !== '불가')
+      // petFriendly === '불가' 항목 제거 (펫 키워드가 이름/카테고리에 있으면 보호)
+      const PET_KEYWORDS = /애견|반려|강아지|도그|펫|dog|pet/i
+      const filtered = updated.filter(p => {
+        if (p.petFriendly !== '불가') return true
+        const text = `${p.name} ${p.rawCategory || ''}`
+        if (PET_KEYWORDS.test(text)) return true
+        return false
+      })
       // 지도 마커도 다시 그리기
       if (mapInstanceRef.current && lastSearchCenterRef.current) {
         renderMarkers(filtered, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1])

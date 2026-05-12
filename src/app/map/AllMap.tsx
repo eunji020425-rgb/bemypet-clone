@@ -205,8 +205,15 @@ export default function AllMap() {
           enriching: false,
         }
       })
-      // 불가 항목 제거
-      const filtered = updated.filter(it => it.petFriendly !== '불가')
+      // 불가 항목 제거 (단, 이름/카테고리에 펫 관련 키워드가 있으면 보호)
+      const PET_KEYWORDS = /애견|반려|강아지|도그|펫|dog|pet/i
+      const filtered = updated.filter(it => {
+        if (it.petFriendly !== '불가') return true
+        // 보호 조건: 이름이나 카테고리에 펫 키워드가 있으면 절대 제거 X
+        const text = `${it.name} ${it.rawCategory || ''}`
+        if (PET_KEYWORDS.test(text)) return true
+        return false
+      })
       // 지도 마커도 다시 그리기
       if (mapInstanceRef.current && lastSearchCenterRef.current) {
         renderMarkers(lastSearchCenterRef.current[0], lastSearchCenterRef.current[1], filtered)
