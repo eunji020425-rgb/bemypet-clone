@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   }
 
   // 2. 네이버 Local Search 폴백
-  const naverClientId = process.env.NAVER_CLIENT_ID
+  const naverClientId = process.env.NAVER_CLIENT_ID || process.env.NEXT_PUBLIC_NAVER_CLIENT_ID
   const naverSecret = process.env.NAVER_CLIENT_SECRET
   if (naverClientId && naverSecret) {
     try {
