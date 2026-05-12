@@ -8,7 +8,7 @@ export default async function CommunityPage() {
   const supabase = await createClient()
   const { data: posts } = await supabase
     .from('posts')
-    .select('*, profiles(nickname, avatar_url)')
+    .select('*, profiles(nickname, avatar_url), comments(count)')
     .order('created_at', { ascending: false })
     .limit(30)
 
@@ -37,7 +37,7 @@ export default async function CommunityPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {(posts as (Post & { profiles: { nickname: string; avatar_url: string | null } })[]).map(post => (
+          {(posts as (Post & { profiles: { nickname: string; avatar_url: string | null }; comments: { count: number }[] })[]).map(post => (
             <Link
               key={post.id}
               href={`/community/${post.id}`}
@@ -57,7 +57,7 @@ export default async function CommunityPage() {
                     <Heart size={12} /> {post.likes_count ?? 0}
                   </span>
                   <span className="flex items-center gap-1">
-                    <MessageCircle size={12} /> {post.comments_count ?? 0}
+                    <MessageCircle size={12} /> {post.comments?.[0]?.count ?? 0}
                   </span>
                   <span>{new Date(post.created_at).toLocaleDateString('ko-KR')}</span>
                 </div>
