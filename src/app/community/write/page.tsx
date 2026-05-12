@@ -68,15 +68,15 @@ export default function WritePage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-[#2d3a22] mb-6">글쓰기</h1>
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-[#e8e3d0] p-6 flex flex-col gap-4">
+      <h1 className="text-xl font-bold text-[#2a3a55] mb-6">글쓰기</h1>
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-[#d6e6ff] p-6 flex flex-col gap-4">
         <input
           type="text"
           placeholder="제목을 입력하세요"
           value={title}
           onChange={e => setTitle(e.target.value)}
           required
-          className="w-full border-b border-[#e8e3d0] pb-3 text-base font-medium outline-none focus:border-[#5a7a3a]"
+          className="w-full border-b border-[#d6e6ff] pb-3 text-base font-medium outline-none focus:border-[#3a7ab8]"
         />
         <textarea
           placeholder="내용을 입력하세요"
@@ -103,7 +103,7 @@ export default function WritePage() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-2 text-sm text-[#aaa] hover:text-[#5a7a3a] transition-colors w-fit"
+            className="flex items-center gap-2 text-sm text-[#aaa] hover:text-[#3a7ab8] transition-colors w-fit"
           >
             <ImagePlus size={18} />
             사진 첨부
@@ -117,14 +117,14 @@ export default function WritePage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-5 py-2 text-sm text-[#888] border border-[#e8e3d0] rounded-full hover:bg-gray-50 transition"
+            className="px-5 py-2 text-sm text-[#888] border border-[#d6e6ff] rounded-full hover:bg-gray-50 transition"
           >
             취소
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 text-sm font-bold bg-[#5a7a3a] hover:bg-[#1a2310] text-white rounded-full transition disabled:opacity-60"
+            className="px-6 py-2 text-sm font-bold bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white rounded-full transition disabled:opacity-60"
           >
             {loading ? '등록 중...' : '등록하기'}
           </button>

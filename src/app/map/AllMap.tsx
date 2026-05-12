@@ -575,8 +575,8 @@ export default function AllMap() {
           onClick={() => setFilter('all')}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition border ${
             filter === 'all'
-              ? 'bg-[#2d3a22] text-white border-[#2d3a22]'
-              : 'bg-white text-[#666] border-[#e8e3d0] hover:border-[#2d3a22]'
+              ? 'bg-[#2a3a55] text-white border-[#2a3a55]'
+              : 'bg-white text-[#666] border-[#d6e6ff] hover:border-[#2a3a55]'
           }`}
         >
           전체 <span className="text-xs opacity-80">({items.length})</span>
@@ -591,7 +591,7 @@ export default function AllMap() {
               onClick={() => setFilter(cat)}
               style={active ? { backgroundColor: style.pin, borderColor: style.pin } : {}}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition border ${
-                active ? 'text-white' : 'bg-white text-[#666] border-[#e8e3d0] hover:border-[#aaa]'
+                active ? 'text-white' : 'bg-white text-[#666] border-[#d6e6ff] hover:border-[#aaa]'
               }`}
             >
               <Icon size={14} />
@@ -605,7 +605,7 @@ export default function AllMap() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 지도 */}
         <div className="lg:w-3/5 relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#e8e3d0]" style={{ height: '600px' }} />
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '600px' }} />
           {showResearchBtn && (
             <button
               onClick={() => {
@@ -618,7 +618,7 @@ export default function AllMap() {
                 fetchAll(c.lat, c.lng, rect).then(all => renderMarkers(c.lat, c.lng, all))
               }}
               disabled={loading}
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
             >
               <Navigation size={14} />이 지역에서 다시 검색
             </button>
@@ -648,15 +648,15 @@ export default function AllMap() {
                   mapInstanceRef.current?.setView([it.lat, it.lng], 16)
                   markersRef.current.get(it.id)?.openPopup()
                 }}
-                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#5a7a3a] shadow-md' : 'border-[#e8e3d0] hover:border-[#5a7a3a]'}`}
+                className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#3a7ab8] shadow-md' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
               >
                 <div className="flex items-start gap-2">
                   <div className="text-lg flex-shrink-0">{style.emoji}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-[#2d3a22] truncate flex-1">{it.name}</p>
+                      <p className="text-sm font-bold text-[#2a3a55] truncate flex-1">{it.name}</p>
                       {it.distance !== undefined && (
-                        <span className="text-xs text-[#5a7a3a] font-medium flex-shrink-0">
+                        <span className="text-xs text-[#3a7ab8] font-medium flex-shrink-0">
                           {it.distance < 1 ? `${Math.round(it.distance * 1000)}m` : `${it.distance.toFixed(1)}km`}
                         </span>
                       )}
@@ -756,11 +756,11 @@ export default function AllMap() {
 
       {/* 선택 상세 */}
       {selected && (
-        <div className="bg-[#f5f7e8] border border-[#5a7a3a] rounded-2xl p-4">
+        <div className="bg-[#f5f7e8] border border-[#3a7ab8] rounded-2xl p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-bold text-[#2d3a22]">{STYLES[selected.category].emoji} {selected.name}</h3>
+                <h3 className="font-bold text-[#2a3a55]">{STYLES[selected.category].emoji} {selected.name}</h3>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${STYLES[selected.category].badge}`}>
                   {STYLES[selected.category].label}
                 </span>
@@ -771,19 +771,19 @@ export default function AllMap() {
               {/* AI 분석 규정 정보 */}
               {selected.summary && (
                 <div className="mt-3 bg-white rounded-lg border border-[#fde68a] p-3">
-                  <p className="text-xs font-bold text-[#5a7a3a] mb-2">💡 AI 분석 정보</p>
+                  <p className="text-xs font-bold text-[#3a7ab8] mb-2">💡 AI 분석 정보</p>
                   <p className="text-sm text-[#444] mb-2">{selected.summary}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs mb-2">
                     {selected.vaccination && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">💉 접종증:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.vaccination}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.vaccination}</span>
                       </div>
                     )}
                     {selected.carrierRequired !== undefined && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">🎒 이동가방:</span>
-                        <span className="font-medium text-[#2d3a22]">
+                        <span className="font-medium text-[#2a3a55]">
                           {selected.carrierRequired ? '필수' : '불필요'}
                         </span>
                       </div>
@@ -791,13 +791,13 @@ export default function AllMap() {
                     {selected.diningArea && selected.diningArea !== '해당없음' && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">🪑 동반 구역:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.diningArea}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.diningArea}</span>
                       </div>
                     )}
                     {selected.sizeLimit && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">🐕 크기 제한:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.sizeLimit}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.sizeLimit}</span>
                       </div>
                     )}
                     {selected.hasOutdoorPlayground && selected.category !== 'playground' && (
@@ -809,19 +809,19 @@ export default function AllMap() {
                     {selected.grassType && selected.grassType !== '해당없음' && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">🌱 잔디:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.grassType}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.grassType}</span>
                       </div>
                     )}
                     {selected.playgroundSize && selected.playgroundSize !== '해당없음' && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">📐 운동장 크기:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.playgroundSize}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.playgroundSize}</span>
                       </div>
                     )}
                     {selected.sizeSeparation !== undefined && selected.category === 'playground' && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">🔀 대소형견 분리:</span>
-                        <span className="font-medium text-[#2d3a22]">
+                        <span className="font-medium text-[#2a3a55]">
                           {selected.sizeSeparation ? '있음' : '없음'}
                         </span>
                       </div>
@@ -829,19 +829,19 @@ export default function AllMap() {
                     {selected.feeInfo && selected.feeInfo !== '해당없음' && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">💰 이용료:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.feeInfo}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.feeInfo}</span>
                       </div>
                     )}
                     {selected.hours && (
                       <div className="flex items-center gap-1">
                         <span className="text-[#aaa]">🕐 운영시간:</span>
-                        <span className="font-medium text-[#2d3a22]">{selected.hours}</span>
+                        <span className="font-medium text-[#2a3a55]">{selected.hours}</span>
                       </div>
                     )}
                   </div>
                   {selected.rules && selected.rules.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-[#fde68a]">
-                      <p className="text-xs font-bold text-[#5a7a3a] mb-1">📋 규정·안내</p>
+                      <p className="text-xs font-bold text-[#3a7ab8] mb-1">📋 규정·안내</p>
                       <ul className="text-xs text-[#444] space-y-0.5">
                         {selected.rules.map((r, i) => (
                           <li key={i} className="flex items-start gap-1">
@@ -858,9 +858,9 @@ export default function AllMap() {
                 </div>
               )}
               {!selected.summary && selected.enriching && PET_PLACE_CATEGORIES.includes(selected.category) && (
-                <div className="mt-3 bg-white rounded-lg border border-[#e8e3d0] p-3">
+                <div className="mt-3 bg-white rounded-lg border border-[#d6e6ff] p-3">
                   <p className="text-xs text-[#aaa] italic flex items-center gap-2">
-                    <span className="inline-block w-3 h-3 border-2 border-[#5a7a3a] border-t-transparent rounded-full animate-spin" />
+                    <span className="inline-block w-3 h-3 border-2 border-[#3a7ab8] border-t-transparent rounded-full animate-spin" />
                     AI가 규정 정보를 분석 중입니다...
                   </p>
                 </div>
@@ -869,12 +869,12 @@ export default function AllMap() {
               <div className="flex flex-wrap gap-3 mt-3 items-center">
                 <a
                   href={`/route?from=map&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
-                  className="bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
+                  className="bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
                 >
                   <Navigation size={13} />앱에서 길찾기
                 </a>
                 {selected.phone && (
-                  <a href={`tel:${selected.phone}`} className="text-sm text-[#5a7a3a] font-bold flex items-center gap-1">
+                  <a href={`tel:${selected.phone}`} className="text-sm text-[#3a7ab8] font-bold flex items-center gap-1">
                     <Phone size={13} />{selected.phone}
                   </a>
                 )}

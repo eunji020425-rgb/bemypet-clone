@@ -195,21 +195,21 @@ export default function AdminDashboard({
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Shield className="text-[#5a7a3a]" size={22} />
-          <h1 className="text-xl font-bold text-[#2d3a22]">운영자 대시보드</h1>
+          <Shield className="text-[#3a7ab8]" size={22} />
+          <h1 className="text-xl font-bold text-[#2a3a55]">운영자 대시보드</h1>
           <span className="text-xs text-[#aaa] ml-1">{adminNickname}님 안녕하세요</span>
         </div>
       </div>
 
       {/* 메시지 토스트 */}
       {message && (
-        <div className="fixed top-20 right-4 z-50 bg-[#2d3a22] text-white text-sm px-4 py-2 rounded-full shadow-lg">
+        <div className="fixed top-20 right-4 z-50 bg-[#2a3a55] text-white text-sm px-4 py-2 rounded-full shadow-lg">
           {message}
         </div>
       )}
 
       {/* 탭 */}
-      <div className="flex gap-2 border-b border-[#e8e3d0] mb-6">
+      <div className="flex gap-2 border-b border-[#d6e6ff] mb-6">
         {[
           { id: 'overview' as const, label: '개요', icon: BarChart3 },
           { id: 'posts' as const, label: '게시글', icon: FileText },
@@ -225,7 +225,7 @@ export default function AdminDashboard({
               onClick={() => setTab(t.id)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold border-b-2 transition-colors ${
                 tab === t.id
-                  ? 'border-[#5a7a3a] text-[#5a7a3a]'
+                  ? 'border-[#3a7ab8] text-[#3a7ab8]'
                   : 'border-transparent text-[#888] hover:text-[#444]'
               }`}
             >
@@ -251,16 +251,16 @@ export default function AdminDashboard({
 
       {/* 게시글 관리 탭 */}
       {tab === 'posts' && (
-        <div className="bg-white rounded-2xl border border-[#e8e3d0] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#e8e3d0] text-sm font-bold text-[#2d3a22]">
+        <div className="bg-white rounded-2xl border border-[#d6e6ff] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#d6e6ff] text-sm font-bold text-[#2a3a55]">
             최근 게시글 ({posts.length})
           </div>
-          <div className="divide-y divide-[#e8e3d0]">
+          <div className="divide-y divide-[#d6e6ff]">
             {posts.length === 0 && <p className="text-center py-10 text-sm text-[#aaa]">게시글이 없습니다.</p>}
             {posts.map(p => (
               <div key={p.id} className="flex items-center justify-between gap-4 px-4 py-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#2d3a22] truncate">{p.title}</p>
+                  <p className="text-sm font-medium text-[#2a3a55] truncate">{p.title}</p>
                   <p className="text-xs text-[#aaa] mt-0.5">
                     {(p.profiles as any)?.nickname ?? '익명'} · {new Date(p.created_at).toLocaleString('ko-KR')}
                   </p>
@@ -280,21 +280,21 @@ export default function AdminDashboard({
 
       {/* 댓글 관리 탭 */}
       {tab === 'comments' && (
-        <div className="bg-white rounded-2xl border border-[#e8e3d0] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#e8e3d0] text-sm font-bold text-[#2d3a22]">
+        <div className="bg-white rounded-2xl border border-[#d6e6ff] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#d6e6ff] text-sm font-bold text-[#2a3a55]">
             최근 댓글 ({comments.length})
           </div>
-          <div className="divide-y divide-[#e8e3d0]">
+          <div className="divide-y divide-[#d6e6ff]">
             {comments.length === 0 && <p className="text-center py-10 text-sm text-[#aaa]">댓글이 없습니다.</p>}
             {comments.map(c => (
               <div key={c.id} className="flex items-start justify-between gap-3 px-4 py-3">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
-                  <div className="w-7 h-7 rounded-full bg-[#d4e8b0] text-[#5a7a3a] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-[#b8d3f5] text-[#3a7ab8] flex items-center justify-center text-xs font-bold flex-shrink-0">
                     {(c.profiles as any)?.nickname?.[0] ?? '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-xs font-medium text-[#2d3a22]">{(c.profiles as any)?.nickname ?? '익명'}</p>
+                      <p className="text-xs font-medium text-[#2a3a55]">{(c.profiles as any)?.nickname ?? '익명'}</p>
                       <p className="text-xs text-[#aaa]">{new Date(c.created_at).toLocaleString('ko-KR')}</p>
                     </div>
                     {(c.posts as any)?.title && (
@@ -318,11 +318,11 @@ export default function AdminDashboard({
 
       {/* 사용자 관리 탭 */}
       {tab === 'users' && (
-        <div className="bg-white rounded-2xl border border-[#e8e3d0] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#e8e3d0] text-sm font-bold text-[#2d3a22]">
+        <div className="bg-white rounded-2xl border border-[#d6e6ff] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#d6e6ff] text-sm font-bold text-[#2a3a55]">
             최근 가입자 ({users.length})
           </div>
-          <div className="divide-y divide-[#e8e3d0]">
+          <div className="divide-y divide-[#d6e6ff]">
             {users.length === 0 && <p className="text-center py-10 text-sm text-[#aaa]">사용자가 없습니다.</p>}
             {users.map(u => (
               <div key={u.id} className="flex items-center justify-between gap-4 px-4 py-3">
@@ -332,7 +332,7 @@ export default function AdminDashboard({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-[#2d3a22] truncate">{u.nickname}</p>
+                      <p className="text-sm font-medium text-[#2a3a55] truncate">{u.nickname}</p>
                       {u.is_admin && (
                         <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full border border-yellow-200 flex items-center gap-1">
                           <Shield size={10} />관리자
@@ -363,22 +363,22 @@ export default function AdminDashboard({
 
       {/* 실시간 채팅 관리 탭 */}
       {tab === 'chat' && (
-        <div className="bg-white rounded-2xl border border-[#e8e3d0] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#e8e3d0] flex items-center justify-between">
-            <p className="text-sm font-bold text-[#2d3a22]">최근 채팅 메시지 ({chat.length})</p>
+        <div className="bg-white rounded-2xl border border-[#d6e6ff] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#d6e6ff] flex items-center justify-between">
+            <p className="text-sm font-bold text-[#2a3a55]">최근 채팅 메시지 ({chat.length})</p>
             <p className="text-xs text-[#aaa]">숨김 처리하면 일반 사용자에게 즉시 안 보이게 됩니다</p>
           </div>
-          <div className="divide-y divide-[#e8e3d0]">
+          <div className="divide-y divide-[#d6e6ff]">
             {chat.length === 0 && <p className="text-center py-10 text-sm text-[#aaa]">채팅 메시지가 없습니다.</p>}
             {chat.map(c => (
               <div key={c.id} className={`flex items-start justify-between gap-3 px-4 py-3 ${c.hidden ? 'bg-gray-50' : ''}`}>
                 <div className="flex items-start gap-2 flex-1 min-w-0">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${c.hidden ? 'bg-gray-200 text-gray-500' : 'bg-[#d4e8b0] text-[#5a7a3a]'}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${c.hidden ? 'bg-gray-200 text-gray-500' : 'bg-[#b8d3f5] text-[#3a7ab8]'}`}>
                     {(c.profiles as any)?.nickname?.[0] ?? '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-medium text-[#2d3a22]">{(c.profiles as any)?.nickname ?? '익명'}</p>
+                      <p className="text-xs font-medium text-[#2a3a55]">{(c.profiles as any)?.nickname ?? '익명'}</p>
                       <p className="text-xs text-[#aaa]">{new Date(c.created_at).toLocaleString('ko-KR')}</p>
                       {c.hidden && (
                         <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
@@ -423,7 +423,7 @@ export default function AdminDashboard({
           <button
             onClick={cleanOldCache}
             disabled={loading}
-            className="w-full bg-[#2d3a22] hover:bg-black text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-50"
+            className="w-full bg-[#2a3a55] hover:bg-black text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-50"
           >
             🗑 30일 이상된 오래된 캐시만 정리하기 (권장)
           </button>
@@ -435,21 +435,21 @@ export default function AdminDashboard({
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: any; color: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-[#e8e3d0] p-4">
+    <div className="bg-white rounded-2xl border border-[#d6e6ff] p-4">
       <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center mb-3`}>
         <Icon size={18} />
       </div>
       <p className="text-xs text-[#888]">{label}</p>
-      <p className="text-2xl font-bold text-[#2d3a22] mt-1">{value.toLocaleString()}</p>
+      <p className="text-2xl font-bold text-[#2a3a55] mt-1">{value.toLocaleString()}</p>
     </div>
   )
 }
 
 function CacheCard({ label, count, onClear, loading }: { label: string; count: number; onClear: () => void; loading: boolean }) {
   return (
-    <div className="bg-white rounded-2xl border border-[#e8e3d0] p-4">
+    <div className="bg-white rounded-2xl border border-[#d6e6ff] p-4">
       <p className="text-xs text-[#888]">{label}</p>
-      <p className="text-2xl font-bold text-[#2d3a22] mt-1 mb-3">{count.toLocaleString()}개</p>
+      <p className="text-2xl font-bold text-[#2a3a55] mt-1 mb-3">{count.toLocaleString()}개</p>
       <button
         onClick={onClear}
         disabled={loading || count === 0}

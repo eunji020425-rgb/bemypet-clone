@@ -39,14 +39,14 @@ export default function LoginPage() {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-8">
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🐾</div>
-          <h1 className="text-xl font-bold text-[#2d3a22]">로그인</h1>
+          <h1 className="text-xl font-bold text-[#2a3a55]">로그인</h1>
           <p className="text-xs text-[#aaa] mt-1">PetTogether에 오신 것을 환영합니다</p>
         </div>
 
         {/* 구글 로그인 */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-2 border border-[#e8e3d0] rounded-xl py-3 text-sm font-medium text-[#444] hover:bg-gray-50 transition mb-4"
+          className="w-full flex items-center justify-center gap-2 border border-[#d6e6ff] rounded-xl py-3 text-sm font-medium text-[#444] hover:bg-gray-50 transition mb-4"
         >
           <svg width="18" height="18" viewBox="0 0 48 48">
             <path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/>
@@ -58,9 +58,9 @@ export default function LoginPage() {
         </button>
 
         <div className="flex items-center gap-2 my-4">
-          <hr className="flex-1 border-[#e8e3d0]" />
+          <hr className="flex-1 border-[#d6e6ff]" />
           <span className="text-xs text-[#bbb]">또는</span>
-          <hr className="flex-1 border-[#e8e3d0]" />
+          <hr className="flex-1 border-[#d6e6ff]" />
         </div>
 
         {/* 이메일 로그인 폼 */}
@@ -71,7 +71,7 @@ export default function LoginPage() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="w-full border border-[#e8e3d0] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#5a7a3a]"
+            className="w-full border border-[#d6e6ff] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#3a7ab8]"
           />
           <input
             type="password"
@@ -79,13 +79,13 @@ export default function LoginPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
-            className="w-full border border-[#e8e3d0] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#5a7a3a]"
+            className="w-full border border-[#d6e6ff] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#3a7ab8]"
           />
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-60"
+            className="w-full bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-60"
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>
@@ -93,7 +93,7 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-[#aaa] mt-5">
           계정이 없으신가요?{' '}
-          <Link href="/auth/signup" className="text-[#5a7a3a] font-bold hover:underline">
+          <Link href="/auth/signup" className="text-[#3a7ab8] font-bold hover:underline">
             회원가입
           </Link>
         </p>

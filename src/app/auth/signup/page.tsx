@@ -41,12 +41,12 @@ export default function SignupPage() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-8 text-center">
           <div className="text-5xl mb-4">✉️</div>
-          <h2 className="text-lg font-bold text-[#2d3a22] mb-2">이메일을 확인해주세요!</h2>
+          <h2 className="text-lg font-bold text-[#2a3a55] mb-2">이메일을 확인해주세요!</h2>
           <p className="text-sm text-[#888] mb-6">
             <strong>{email}</strong>로 인증 메일을 보냈습니다.<br />
             메일함을 확인해 인증을 완료해주세요.
           </p>
-          <Link href="/auth/login" className="text-[#5a7a3a] font-bold text-sm hover:underline">
+          <Link href="/auth/login" className="text-[#3a7ab8] font-bold text-sm hover:underline">
             로그인 페이지로 →
           </Link>
         </div>
@@ -59,7 +59,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-8">
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">🐾</div>
-          <h1 className="text-xl font-bold text-[#2d3a22]">회원가입</h1>
+          <h1 className="text-xl font-bold text-[#2a3a55]">회원가입</h1>
           <p className="text-xs text-[#aaa] mt-1">PetTogether과 함께 시작하세요</p>
         </div>
 
@@ -70,7 +70,7 @@ export default function SignupPage() {
             value={nickname}
             onChange={e => setNickname(e.target.value)}
             required
-            className="w-full border border-[#e8e3d0] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#5a7a3a]"
+            className="w-full border border-[#d6e6ff] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#3a7ab8]"
           />
           <input
             type="email"
@@ -78,7 +78,7 @@ export default function SignupPage() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            className="w-full border border-[#e8e3d0] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#5a7a3a]"
+            className="w-full border border-[#d6e6ff] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#3a7ab8]"
           />
           <input
             type="password"
@@ -86,13 +86,13 @@ export default function SignupPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
-            className="w-full border border-[#e8e3d0] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#5a7a3a]"
+            className="w-full border border-[#d6e6ff] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#3a7ab8]"
           />
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#5a7a3a] hover:bg-[#1a2310] text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-60"
+            className="w-full bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-60"
           >
             {loading ? '가입 중...' : '회원가입'}
           </button>
@@ -100,7 +100,7 @@ export default function SignupPage() {
 
         <p className="text-center text-xs text-[#aaa] mt-5">
           이미 계정이 있으신가요?{' '}
-          <Link href="/auth/login" className="text-[#5a7a3a] font-bold hover:underline">
+          <Link href="/auth/login" className="text-[#3a7ab8] font-bold hover:underline">
             로그인
           </Link>
         </p>

@@ -1,28 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  /* Soft Green Glow Palette */
-  --background: #fdfaf0;
-  --foreground: #2d3a22;
-  --ink-soft: #6b7560;
+  /* Baby Blue Soft Pastel Palette */
+  --background: #f0f6ff;
+  --background-2: #e3eeff;
+  --foreground: #2a3a55;
+  --ink-soft: #6a7c95;
 
-  /* 메인 그린 톤 */
-  --green-1: #e8f3d0;
-  --green-2: #d4e8b0;
-  --green-3: #b8d990;
-  --green-4: #94c068;
-  --green-deep: #5a7a3a;
+  --blue-1: #eaf2ff;
+  --blue-2: #d6e6ff;
+  --blue-3: #b8d3f5;
+  --blue-4: #8fb8e8;
+  --blue-accent: #5a9de0;
+  --blue-deep: #3a7ab8;
 
-  /* 따뜻한 액센트 */
-  --cream: #fdfaf0;
-  --warm: #f5ead4;
+  --cream: #fff8ee;
+  --warm: #ffe9d4;
 
-  /* 기존 yellow 호환 (점진적 마이그레이션용) */
-  --yellow: #94c068;
-  --yellow-dark: #5a7a3a;
+  /* 호환 변수 (기존 코드의 yellow/green 매핑) */
+  --yellow: #5a9de0;
+  --yellow-dark: #3a7ab8;
+  --green-deep: #3a7ab8;
 
-  --border: #e8e3d0;
-  --text-sub: #6b7560;
+  --border: #d6e6ff;
+  --text-sub: #6a7c95;
 }
 
 @theme inline {
@@ -42,9 +43,9 @@ body {
   letter-spacing: -0.2px;
   line-height: 1.5;
   background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(212,232,176,0.35) 0, transparent 45%),
-    radial-gradient(ellipse at 80% 60%, rgba(184,217,144,0.28) 0, transparent 50%),
-    radial-gradient(ellipse at 50% 90%, rgba(232,243,208,0.45) 0, transparent 45%);
+    radial-gradient(ellipse at 20% 15%, rgba(184, 211, 245, 0.55) 0, transparent 50%),
+    radial-gradient(ellipse at 85% 70%, rgba(143, 184, 232, 0.35) 0, transparent 50%),
+    radial-gradient(ellipse at 50% 95%, rgba(214, 230, 255, 0.6) 0, transparent 45%);
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -55,8 +56,8 @@ body {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }

@@ -6,7 +6,7 @@
       </div>
       <div className="flex flex-col gap-3">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 border border-[#e8e3d0]">
+          <div key={i} className="bg-white rounded-2xl p-5 border border-[#d6e6ff]">
             <div className="flex justify-between gap-2 mb-2">
               <div className="h-4 bg-gray-200 rounded animate-pulse flex-1" />
               <div className="w-14 h-14 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />

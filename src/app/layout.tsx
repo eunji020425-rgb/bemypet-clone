@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Header />
         <main className="flex-1">{children}</main>
-        <footer className="text-center text-xs text-[#6b7560] py-8 mt-10">
+        <footer className="text-center text-xs text-[#6a7c95] py-8 mt-10">
           © 2024 PetTogether. All rights reserved.
         </footer>
       </body>

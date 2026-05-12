@@ -82,8 +82,8 @@ export default function AIDoctorPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-2 mb-4">
-        <Stethoscope className="text-[#5a7a3a]" size={22} />
-        <h1 className="text-xl font-bold text-[#2d3a22]">AI 닥터</h1>
+        <Stethoscope className="text-[#3a7ab8]" size={22} />
+        <h1 className="text-xl font-bold text-[#2a3a55]">AI 닥터</h1>
         <span className="text-xs text-[#aaa]">수의사 AI · Gemini 2.5 Flash</span>
       </div>
 
@@ -96,24 +96,24 @@ export default function AIDoctorPage() {
       <div className="flex flex-wrap gap-2 mb-4">
         {QUICK_QUESTIONS.map((q, i) => (
           <button key={i} onClick={() => send(q)}
-            className="text-xs bg-white border border-[#e8e3d0] rounded-full px-3 py-1.5 hover:border-[#5a7a3a] hover:text-[#5a7a3a] transition-colors">
+            className="text-xs bg-white border border-[#d6e6ff] rounded-full px-3 py-1.5 hover:border-[#3a7ab8] hover:text-[#3a7ab8] transition-colors">
             {q}
           </button>
         ))}
       </div>
 
       {/* 채팅창 */}
-      <div className="bg-white rounded-2xl border border-[#e8e3d0] flex flex-col" style={{ height: '55vh' }}>
+      <div className="bg-white rounded-2xl border border-[#d6e6ff] flex flex-col" style={{ height: '55vh' }}>
         <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               {m.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-full bg-[#d4e8b0] flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-0.5">🩺</div>
+                <div className="w-7 h-7 rounded-full bg-[#b8d3f5] flex items-center justify-center text-sm mr-2 flex-shrink-0 mt-0.5">🩺</div>
               )}
               <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                 m.role === 'user'
-                  ? 'bg-[#5a7a3a] text-white rounded-tr-sm'
-                  : 'bg-[#f5f5f5] text-[#2d3a22] rounded-tl-sm'
+                  ? 'bg-[#3a7ab8] text-white rounded-tr-sm'
+                  : 'bg-[#f5f5f5] text-[#2a3a55] rounded-tl-sm'
               }`}>
                 {m.content}
               </div>
@@ -121,7 +121,7 @@ export default function AIDoctorPage() {
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="w-7 h-7 rounded-full bg-[#d4e8b0] flex items-center justify-center text-sm mr-2">🩺</div>
+              <div className="w-7 h-7 rounded-full bg-[#b8d3f5] flex items-center justify-center text-sm mr-2">🩺</div>
               <div className="bg-[#f5f5f5] rounded-2xl rounded-tl-sm px-4 py-3">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-[#ccc] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -134,17 +134,17 @@ export default function AIDoctorPage() {
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-[#e8e3d0] px-4 py-3">
+        <div className="border-t border-[#d6e6ff] px-4 py-3">
           <form onSubmit={e => { e.preventDefault(); send(input) }} className="flex gap-2">
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               placeholder="반려동물 증상이나 건강 질문을 입력하세요..."
-              className="flex-1 border border-[#e8e3d0] rounded-full px-4 py-2 text-sm outline-none focus:border-[#5a7a3a]"
+              className="flex-1 border border-[#d6e6ff] rounded-full px-4 py-2 text-sm outline-none focus:border-[#3a7ab8]"
               disabled={loading}
             />
             <button type="submit" disabled={loading || !input.trim()}
-              className="bg-[#5a7a3a] hover:bg-[#1a2310] text-white rounded-full p-2.5 transition disabled:opacity-40">
+              className="bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white rounded-full p-2.5 transition disabled:opacity-40">
               <Send size={16} />
             </button>
           </form>

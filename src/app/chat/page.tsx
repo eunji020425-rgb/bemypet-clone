@@ -18,7 +18,7 @@ export default async function ChatPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-        <h1 className="text-xl font-bold text-[#2d3a22]">실시간 채팅</h1>
+        <h1 className="text-xl font-bold text-[#2a3a55]">실시간 채팅</h1>
         <span className="text-xs text-[#aaa] ml-1">모두와 함께하는 라이브 채팅방 🐾</span>
       </div>
       <ChatRoom
