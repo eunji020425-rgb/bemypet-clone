@@ -101,9 +101,9 @@ export default function PetPlacesMap() {
         if (PET_KEYWORDS.test(text)) return true
         return false
       })
-      // 지도 마커도 다시 그리기
+      // 지도 마커 갱신 (사용자가 직접 변경한 줌은 유지)
       if (mapInstanceRef.current && lastSearchCenterRef.current) {
-        renderMarkers(filtered, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1])
+        renderMarkers(filtered, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1], true)
       }
       return filtered
     })
@@ -214,9 +214,9 @@ export default function PetPlacesMap() {
         )
         // 새 장소들 백그라운드 enrichment
         enrichWithGemini(newOnes)
-        // 새 마커 추가 (지도가 초기화 됐을 때만)
+        // 새 마커 추가 (사용자 줌 유지)
         if (mapInstanceRef.current && lastSearchCenterRef.current) {
-          renderMarkers(merged, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1])
+          renderMarkers(merged, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1], true)
         }
         return merged
       })
@@ -225,7 +225,7 @@ export default function PetPlacesMap() {
     }
   }
 
-  const renderMarkers = async (items: Place[], lat: number, lng: number) => {
+  const renderMarkers = async (items: Place[], lat: number, lng: number, preserveView: boolean = false) => {
     if (typeof window === 'undefined') return
     const L = (await import('leaflet')).default
 
@@ -283,8 +283,8 @@ export default function PetPlacesMap() {
       markersRef.current.set(p.id, marker)
     })
 
-    // 자동 줌
-    if (items.length > 0) {
+    // 자동 줌 - 초기 렌더링 시에만
+    if (!preserveView && items.length > 0) {
       const bounds = L.latLngBounds([[lat, lng], ...items.map(p => [p.lat, p.lng] as [number, number])])
       mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
     }

@@ -214,9 +214,9 @@ export default function AllMap() {
         if (PET_KEYWORDS.test(text)) return true
         return false
       })
-      // 지도 마커도 다시 그리기
+      // 지도 마커 갱신 (사용자가 직접 변경한 줌은 유지)
       if (mapInstanceRef.current && lastSearchCenterRef.current) {
-        renderMarkers(lastSearchCenterRef.current[0], lastSearchCenterRef.current[1], filtered)
+        renderMarkers(lastSearchCenterRef.current[0], lastSearchCenterRef.current[1], filtered, true)
       }
       return filtered
     })
@@ -258,7 +258,7 @@ export default function AllMap() {
     return all
   }
 
-  const renderMarkers = async (lat: number, lng: number, all: Item[]) => {
+  const renderMarkers = async (lat: number, lng: number, all: Item[], preserveView: boolean = false) => {
     if (typeof window === 'undefined') return
     const L = (await import('leaflet')).default
 
@@ -316,11 +316,13 @@ export default function AllMap() {
       if (filter === 'all' || filter === it.category) marker.addTo(mapInstanceRef.current)
     })
 
-    // 자동 줌
-    const visibleItems = all.filter(it => filter === 'all' || filter === it.category)
-    if (visibleItems.length > 0) {
-      const bounds = L.latLngBounds([[lat, lng], ...visibleItems.map(it => [it.lat, it.lng] as [number, number])])
-      mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+    // 자동 줌 - 초기 렌더링 시에만 (사용자가 직접 확대/축소한 경우 유지)
+    if (!preserveView) {
+      const visibleItems = all.filter(it => filter === 'all' || filter === it.category)
+      if (visibleItems.length > 0) {
+        const bounds = L.latLngBounds([[lat, lng], ...visibleItems.map(it => [it.lat, it.lng] as [number, number])])
+        mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+      }
     }
   }
 
