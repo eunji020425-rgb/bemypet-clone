@@ -41,9 +41,6 @@ export default function Header() {
           <Link href="/" className="hover:text-[#f5c518] transition-colors">홈</Link>
           <Link href="/community" className="hover:text-[#f5c518] transition-colors">커뮤니티</Link>
           <Link href="/chat" className="hover:text-[#f5c518] transition-colors">실시간채팅</Link>
-          <Link href="/hospital" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><MapPin size={14}/>동물병원</Link>
-          <Link href="/pet-places" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><PawPrint size={14}/>애견장소</Link>
-          <Link href="/walk" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><Footprints size={14}/>산책로</Link>
           <Link href="/ai-doctor" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><Stethoscope size={14}/>AI닥터</Link>
         </nav>
 
@@ -89,9 +86,6 @@ export default function Header() {
           <Link href="/" onClick={() => setMenuOpen(false)}>홈</Link>
           <Link href="/community" onClick={() => setMenuOpen(false)}>커뮤니티</Link>
           <Link href="/chat" onClick={() => setMenuOpen(false)}>실시간채팅</Link>
-          <Link href="/hospital" onClick={() => setMenuOpen(false)}>동물병원</Link>
-          <Link href="/pet-places" onClick={() => setMenuOpen(false)}>애견장소</Link>
-          <Link href="/walk" onClick={() => setMenuOpen(false)}>산책로 추천</Link>
           <Link href="/ai-doctor" onClick={() => setMenuOpen(false)}>AI닥터</Link>
           {user && (
             <Link href="/community/write" onClick={() => setMenuOpen(false)} className="text-[#f5c518] font-bold">
