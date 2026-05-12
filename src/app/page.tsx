@@ -1,96 +1,91 @@
 import Link from 'next/link'
-import { MessageCircle, PenSquare, Users, Map as MapIcon, Stethoscope, Footprints } from 'lucide-react'
+import { MessageCircle, Users, Map as MapIcon, Stethoscope, Footprints, Search } from 'lucide-react'
 
 export default function HomePage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* 히어로 섹션 */}
-      <section className="text-center py-12">
-        <p className="text-xs text-[#5a7a3a] font-semibold tracking-[3px] uppercase">— welcome —</p>
-        <h1 className="mt-4 text-[#2d3a22] leading-[1.05] tracking-[-1.5px]" style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(36px, 6vw, 56px)' }}>
-          a calm space<br/>
-          for you and your <span className="italic text-[#5a7a3a]">pet</span>
-        </h1>
-        <p className="mt-6 text-[#6b7560] text-sm leading-relaxed max-w-md mx-auto">
-          반려동물과 함께하는 모든 순간을<br/>
-          한 곳에 자연스럽게 담아 보세요
-        </p>
+    <div className="max-w-3xl mx-auto px-4 py-8 relative">
 
-        {/* 통합 검색 */}
-        <div className="mt-8 max-w-md mx-auto relative">
-          <span className="absolute left-5 top-1/2 -translate-y-1/2 text-[#94c068]">🔍</span>
+      {/* 히어로: 포스터 헤드라인 */}
+      <section className="text-center pt-6 pb-10 relative">
+        <p className="text-[#2d6b2d] tracking-[6px] text-sm">— WELCOME —</p>
+        <p className="mt-3 text-[#5a8a4a] text-xs tracking-[2px]">(C) PET TOGETHER · 반려동물과 함께</p>
+
+        <h1 className="mt-4 text-[#2d6b2d] leading-[1.05]" style={{ fontSize: 'clamp(44px, 8vw, 78px)', textShadow: '3px 3px 0 #fef3a8' }}>
+          멍냥이랑<span className="inline-block align-middle mx-2">🍀</span>
+          <br/>
+          <span className="fill-green">함께가게</span>
+        </h1>
+
+        <p className="mt-4 text-[#2d6b2d] tracking-[2px] text-xs">PET TOGETHER · DAILY MOMENTS WITH YOUR PET</p>
+
+        {/* 정보 박스 - 럭키캣 ODD 스타일 */}
+        <div className="mt-8 max-w-lg mx-auto lucky-card p-5 text-left">
+          <div className="flex items-baseline gap-3 mb-2">
+            <span className="text-2xl text-[#2d6b2d]">PET</span>
+            <span className="text-[#5a8a4a] text-sm">서울 마포구 어디든지 우리집</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-[#5a8a4a] tracking-wider">
+            <span>DATE & TIME</span>
+            <span className="text-[#2d6b2d]">매일 24시간 · 언제든</span>
+          </div>
+        </div>
+
+        {/* 검색바 */}
+        <div className="mt-5 max-w-lg mx-auto relative">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#6fb83f]" size={18} />
           <input
             type="text"
             placeholder="장소, 병원, 카페 검색"
-            className="w-full backdrop-blur-xl bg-white/65 border border-white/50 rounded-full pl-12 pr-5 py-3.5 text-sm outline-none text-[#2d3a22] placeholder:text-[#6b7560]"
+            className="w-full bg-white border-2 border-[#6fb83f] rounded-full pl-12 pr-5 py-3 text-sm outline-none text-[#2d6b2d] placeholder:text-[#95cc5c]"
           />
-        </div>
-
-        {/* 빠른 액션 */}
-        <div className="flex justify-center gap-3 mt-8 flex-wrap">
-          <Link href="/map" className="group">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-14 h-14 rounded-full bg-[#e8f3d0] flex items-center justify-center group-hover:scale-105 transition-transform border border-white/50">
-                <MapIcon size={22} className="text-[#5a7a3a]" />
-              </div>
-              <span className="text-xs text-[#2d3a22] font-medium">지도</span>
-            </div>
-          </Link>
-          <Link href="/community" className="group">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-14 h-14 rounded-full bg-[#f5ead4] flex items-center justify-center group-hover:scale-105 transition-transform border border-white/50">
-                <Users size={22} className="text-[#a87a50]" />
-              </div>
-              <span className="text-xs text-[#2d3a22] font-medium">커뮤니티</span>
-            </div>
-          </Link>
-          <Link href="/chat" className="group">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-14 h-14 rounded-full bg-[#d4e8b0] flex items-center justify-center group-hover:scale-105 transition-transform border border-white/50">
-                <MessageCircle size={22} className="text-[#5a7a3a]" />
-              </div>
-              <span className="text-xs text-[#2d3a22] font-medium">실시간채팅</span>
-            </div>
-          </Link>
-          <Link href="/ai-doctor" className="group">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-14 h-14 rounded-full bg-[#fdfaf0] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#e8e3d0]">
-                <Stethoscope size={22} className="text-[#5a7a3a]" />
-              </div>
-              <span className="text-xs text-[#2d3a22] font-medium">AI닥터</span>
-            </div>
-          </Link>
         </div>
       </section>
 
-      {/* 메인 카드 - 통합 지도 추천 */}
-      <Link href="/map" className="block">
-        <section className="mt-6 backdrop-blur-xl bg-white/65 border border-white/50 rounded-3xl p-7 hover:bg-white/75 transition-colors">
-          <p className="text-[10px] text-[#5a7a3a] tracking-[2px] uppercase font-semibold">— today —</p>
-          <h3 className="mt-2 text-2xl text-[#2d3a22] leading-tight tracking-[-0.5px]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-            perfect day <span className="italic text-[#5a7a3a]">for a walk</span>
-          </h3>
-          <p className="mt-2 text-xs text-[#6b7560]">근처 산책로·카페·동물병원을 한눈에 보세요</p>
-          <div className="mt-4 flex gap-3">
-            <div className="flex-1 bg-white/60 rounded-2xl px-4 py-3">
-              <p className="text-lg text-[#2d3a22]" style={{ fontFamily: "'DM Serif Display', serif" }}>23°C</p>
-              <p className="text-[10px] text-[#6b7560] uppercase tracking-wider mt-0.5">맑음</p>
-            </div>
-            <div className="flex-1 bg-white/60 rounded-2xl px-4 py-3">
-              <p className="text-lg text-[#2d3a22]" style={{ fontFamily: "'DM Serif Display', serif" }}>4 spots</p>
-              <p className="text-[10px] text-[#6b7560] uppercase tracking-wider mt-0.5">추천 장소</p>
-            </div>
+      {/* 특전 리스트 - 럭키캣 포스터 스타일 표 */}
+      <section className="lucky-card overflow-hidden mb-10">
+        <Link href="/map" className="flex items-stretch border-b-2 border-[#6fb83f] hover:bg-[#fef9c4] transition-colors">
+          <div className="w-32 flex items-center justify-center text-[#2d6b2d] py-4 px-3 border-r-2 border-[#6fb83f]">
+            <span className="text-sm">기본특전</span>
           </div>
-        </section>
-      </Link>
+          <div className="flex-1 px-5 py-4 flex items-center gap-2">
+            <MapIcon size={18} className="text-[#6fb83f]" />
+            <span className="text-[#2d6b2d] text-sm">지도 + 산책로 + 동물병원 + 애견동반</span>
+          </div>
+        </Link>
+        <Link href="/community" className="flex items-stretch border-b-2 border-[#6fb83f] hover:bg-[#fef9c4] transition-colors">
+          <div className="w-32 flex items-center justify-center text-[#2d6b2d] py-4 px-3 border-r-2 border-[#6fb83f]">
+            <span className="text-sm">커뮤니티</span>
+          </div>
+          <div className="flex-1 px-5 py-4 flex items-center gap-2">
+            <Users size={18} className="text-[#6fb83f]" />
+            <span className="text-[#2d6b2d] text-sm">자유게시판 + 실시간 채팅</span>
+          </div>
+        </Link>
+        <Link href="/ai-doctor" className="flex items-stretch hover:bg-[#fef9c4] transition-colors">
+          <div className="w-32 flex items-center justify-center text-[#2d6b2d] py-4 px-3 border-r-2 border-[#6fb83f]">
+            <span className="text-sm">AI 닥터</span>
+          </div>
+          <div className="flex-1 px-5 py-4 flex items-center gap-2">
+            <Stethoscope size={18} className="text-[#6fb83f]" />
+            <span className="text-[#2d6b2d] text-sm">반려동물 건강 상담 · 24시간</span>
+          </div>
+        </Link>
+      </section>
 
-      {/* 자유게시판 미리보기 */}
-      <section className="mt-10">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-2xl text-[#2d3a22] tracking-[-0.5px]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-            recent <span className="italic text-[#5a7a3a]">posts</span>
-          </h2>
-          <Link href="/community" className="text-xs text-[#5a7a3a] font-semibold hover:underline">view all →</Link>
+      {/* 해시태그 이벤트 */}
+      <section className="mb-10">
+        <p className="text-[#2d6b2d] tracking-[3px] text-xs mb-3">HASHTAG EVENT</p>
+        <div className="flex flex-col gap-2 items-start">
+          <span className="lucky-chip">#오늘도_우리집_댕댕이</span>
+          <span className="lucky-chip ml-6">#HBDTOMYLUCKYPET</span>
+        </div>
+      </section>
+
+      {/* 최근 게시글 */}
+      <section className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl text-[#2d6b2d]">RECENT <span className="fill-green">POSTS</span></h2>
+          <Link href="/community" className="text-sm text-[#2d6b2d] hover:underline">view all →</Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
@@ -102,15 +97,15 @@ export default function HomePage() {
             <Link
               key={i}
               href="/community"
-              className="backdrop-blur-xl bg-white/65 border border-white/50 rounded-2xl p-4 hover:bg-white/80 transition-colors"
+              className="lucky-card p-4 hover:bg-[#fef9c4] transition-colors"
             >
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#e8f3d0] flex items-center justify-center flex-shrink-0 text-lg">
+                <div className="w-11 h-11 rounded-xl bg-[#e8f5d0] border-2 border-[#6fb83f] flex items-center justify-center flex-shrink-0 text-lg">
                   {post.emoji}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#2d3a22] truncate">{post.title}</p>
-                  <p className="text-xs text-[#6b7560] mt-1">{post.author} · {post.time}</p>
+                  <p className="text-sm text-[#2d6b2d] truncate">{post.title}</p>
+                  <p className="text-xs text-[#5a8a4a] mt-1">{post.author} · {post.time}</p>
                 </div>
               </div>
             </Link>
@@ -118,22 +113,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 산책로 배너 */}
-      <section className="mt-8">
-        <Link
-          href="/map"
-          className="block bg-gradient-to-br from-[#b8d990] to-[#d4e8b0] rounded-3xl p-7 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-[#5a7a3a] tracking-[2px] uppercase font-semibold mb-2">— explore —</p>
-              <h3 className="text-xl text-[#2d3a22] tracking-[-0.5px]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-                find your favorite spot
-              </h3>
-              <p className="text-xs text-[#2d3a22]/70 mt-1">근처 산책로·도그카페·동물병원</p>
-            </div>
-            <Footprints size={32} className="text-[#5a7a3a]" />
+      {/* NOTICE */}
+      <section className="mb-10">
+        <p className="text-[#2d6b2d] tracking-[3px] text-xs mb-3">NOTICE</p>
+        <div className="text-sm text-[#5a8a4a] leading-relaxed space-y-1">
+          <p>· 모든 기능은 회원가입 후 이용 가능합니다</p>
+          <p>· AI 닥터 답변은 참고용이며, 정확한 진단은 동물병원에 문의해 주세요</p>
+          <p>· 커뮤니티 운영 규정을 지켜 주세요</p>
+          <p>· 문의는 @pettogether 로 부탁드립니다</p>
+        </div>
+      </section>
+
+      {/* 산책 배너 */}
+      <section className="mb-10">
+        <Link href="/map" className="lucky-card p-6 flex items-center justify-between hover:bg-[#fef9c4] transition-colors">
+          <div>
+            <p className="text-xs text-[#2d6b2d] tracking-[3px] mb-2">— EXPLORE —</p>
+            <h3 className="text-2xl text-[#2d6b2d]">find your <span className="fill-green">spot</span></h3>
+            <p className="text-sm text-[#5a8a4a] mt-1">근처 산책로 · 도그카페 · 동물병원</p>
           </div>
+          <Footprints size={48} className="text-[#6fb83f]" />
         </Link>
       </section>
     </div>

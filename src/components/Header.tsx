@@ -43,22 +43,22 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/65 border-b border-white/50">
+    <header className="sticky top-0 z-50 bg-[#fdf9c4]/90 backdrop-blur border-b-2 border-[#6fb83f]">
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="text-2xl tracking-tight" style={{ fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.5px' }}>
-          <span className="text-[#2d3a22]">pet</span><span className="italic text-[#5a7a3a]">together</span>
+        <Link href="/" className="text-2xl tracking-tight">
+          <span className="text-[#2d6b2d]">pet</span><span className="text-[#6fb83f]">together</span><span className="text-[#6fb83f] ml-1">🍀</span>
         </Link>
 
         {/* 데스크탑 메뉴 */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#2d3a22]">
-          <Link href="/map" className="hover:text-[#5a7a3a] transition-colors flex items-center gap-1.5 text-[#5a7a3a] font-semibold"><MapIcon size={14}/>지도</Link>
-          <Link href="/" className="hover:text-[#5a7a3a] transition-colors">홈</Link>
-          <Link href="/community" className="hover:text-[#5a7a3a] transition-colors">커뮤니티</Link>
-          <Link href="/chat" className="hover:text-[#5a7a3a] transition-colors">실시간채팅</Link>
-          <Link href="/ai-doctor" className="hover:text-[#5a7a3a] transition-colors flex items-center gap-1.5"><Stethoscope size={14}/>AI닥터</Link>
+        <nav className="hidden md:flex items-center gap-6 text-sm text-[#2d6b2d]">
+          <Link href="/map" className="hover:text-[#6fb83f] transition-colors flex items-center gap-1.5"><MapIcon size={14}/>지도</Link>
+          <Link href="/" className="hover:text-[#6fb83f] transition-colors">홈</Link>
+          <Link href="/community" className="hover:text-[#6fb83f] transition-colors">커뮤니티</Link>
+          <Link href="/chat" className="hover:text-[#6fb83f] transition-colors">실시간채팅</Link>
+          <Link href="/ai-doctor" className="hover:text-[#6fb83f] transition-colors flex items-center gap-1.5"><Stethoscope size={14}/>AI닥터</Link>
           {isAdmin && (
-            <Link href="/admin" className="text-[#a86570] hover:text-[#a86570]/80 transition-colors flex items-center gap-1.5 font-semibold">
+            <Link href="/admin" className="text-[#a86570] hover:text-[#a86570]/80 transition-colors flex items-center gap-1.5">
               <Shield size={14}/>관리자
             </Link>
           )}
@@ -70,7 +70,7 @@ export default function Header() {
             <>
               <Link
                 href="/community/write"
-                className="hidden md:flex items-center gap-1.5 bg-[#2d3a22] hover:bg-[#1a2310] text-[#fdfaf0] text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
+                className="hidden md:flex items-center gap-1.5 bg-[#6fb83f] hover:bg-[#5aa830] text-white text-sm px-5 py-2.5 rounded-full transition-colors border-2 border-[#2d6b2d]"
               >
                 <PenSquare size={14} />
                 글쓰기
