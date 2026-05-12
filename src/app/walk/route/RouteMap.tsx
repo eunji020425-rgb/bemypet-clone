@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Footprints, Clock, Route as RouteIcon, AlertCircle } from 'lucide-react'
+import { Footprints, Clock, Route as RouteIcon, AlertCircle, ExternalLink, MapPin, ChevronRight } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 
 interface Props {
@@ -11,10 +11,19 @@ interface Props {
   addr: string
 }
 
+interface Step {
+  instruction: string
+  distance: number
+  duration: number
+  lat: number
+  lng: number
+}
+
 interface RouteData {
-  distance: number // meters
-  duration: number // seconds
-  geometry: { coordinates: [number, number][] } // [lng, lat]
+  distance: number
+  duration: number
+  geometry: [number, number][]
+  steps: Step[]
 }
 
 export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
@@ -24,29 +33,25 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
   const [route, setRoute] = useState<RouteData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [mode, setMode] = useState<'foot' | 'driving'>('foot')
+  const [mode, setMode] = useState<'foot' | 'car'>('foot')
 
-  const fetchRoute = async (userLat: number, userLng: number, profile: 'foot' | 'driving') => {
+  const fetchRoute = async (userLat: number, userLng: number, m: 'foot' | 'car') => {
     setLoading(true)
     setError('')
     try {
-      const url = `https://router.project-osrm.org/route/v1/${profile}/${userLng},${userLat};${dstLng},${dstLat}?geometries=geojson&overview=full`
-      const res = await fetch(url)
-      const data = await res.json()
-      if (data.code !== 'Ok' || !data.routes?.[0]) {
-        throw new Error('경로를 찾을 수 없습니다.')
+      const res = await fetch(
+        `/api/route?srcLat=${userLat}&srcLng=${userLng}&dstLat=${dstLat}&dstLng=${dstLng}&mode=${m}`
+      )
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j.error || '경로를 가져올 수 없습니다.')
       }
-      const r = data.routes[0]
-      const routeData: RouteData = {
-        distance: r.distance,
-        duration: r.duration,
-        geometry: r.geometry,
-      }
-      setRoute(routeData)
-      await drawMap(userLat, userLng, routeData)
+      const data: RouteData = await res.json()
+      setRoute(data)
+      await drawMap(userLat, userLng, data)
     } catch (e: any) {
       setError(e.message || '경로를 가져올 수 없습니다.')
-      // 경로 없어도 지도는 표시
+      setRoute(null)
       await drawMap(userLat, userLng, null)
     } finally {
       setLoading(false)
@@ -64,7 +69,6 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
       }).addTo(mapInstanceRef.current)
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100)
     } else {
-      // 기존 폴리라인/마커 제거
       mapInstanceRef.current.eachLayer((layer: any) => {
         if (layer instanceof L.Polyline || layer instanceof L.Marker) {
           mapInstanceRef.current.removeLayer(layer)
@@ -77,7 +81,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
       html: `<div style="background:#3b82f6;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(59,130,246,0.2)"></div>`,
       className: '', iconAnchor: [9, 9],
     })
-    L.marker([userLat, userLng], { icon: myIcon }).addTo(mapInstanceRef.current).bindPopup('📍 현재 위치').openPopup()
+    L.marker([userLat, userLng], { icon: myIcon }).addTo(mapInstanceRef.current).bindPopup('📍 출발 위치')
 
     // 목적지
     const dstIcon = L.divIcon({
@@ -91,8 +95,8 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
     L.marker([dstLat, dstLng], { icon: dstIcon }).addTo(mapInstanceRef.current).bindPopup(`<b>${name}</b><br/>${addr}`)
 
     // 경로 라인
-    if (routeData) {
-      const latlngs: [number, number][] = routeData.geometry.coordinates.map(([lng, lat]) => [lat, lng])
+    if (routeData && routeData.geometry.length > 0) {
+      const latlngs = routeData.geometry
       L.polyline(latlngs, {
         color: '#f5c518',
         weight: 6,
@@ -103,7 +107,6 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
       const bounds = L.latLngBounds(latlngs)
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] })
     } else {
-      // 경로 없으면 양 끝점 보이게
       const bounds = L.latLngBounds([[userLat, userLng], [dstLat, dstLng]])
       mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] })
     }
@@ -134,7 +137,7 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
 
-  const switchMode = (newMode: 'foot' | 'driving') => {
+  const switchMode = (newMode: 'foot' | 'car') => {
     if (newMode === mode || !userPos) return
     setMode(newMode)
     fetchRoute(userPos[0], userPos[1], newMode)
@@ -143,14 +146,29 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
   const formatDistance = (m: number) => m < 1000 ? `${Math.round(m)}m` : `${(m / 1000).toFixed(1)}km`
   const formatDuration = (s: number) => {
     const min = Math.round(s / 60)
+    if (min < 1) return '1분 미만'
     if (min < 60) return `${min}분`
     return `${Math.floor(min / 60)}시간 ${min % 60}분`
   }
 
+  // 대중교통은 카카오맵 외부 링크 (한국 대중교통은 카카오/네이버가 가장 정확함)
+  const transitUrl = userPos
+    ? `https://map.kakao.com/?sName=${encodeURIComponent('현재위치')}&eName=${encodeURIComponent(name)}&sX=${userPos[1]}&sY=${userPos[0]}&eX=${dstLng}&eY=${dstLat}`
+    : '#'
+  const naverTransitUrl = userPos
+    ? `https://map.naver.com/p/directions/${userPos[1]},${userPos[0]},,,PLACE_POI/${dstLng},${dstLat},${encodeURIComponent(name)},,PLACE_POI/-/transit`
+    : '#'
+
+  const focusStep = (step: Step) => {
+    if (mapInstanceRef.current && step.lat && step.lng) {
+      mapInstanceRef.current.setView([step.lat, step.lng], 17)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {/* 이동 수단 선택 */}
-      <div className="flex gap-2">
+      {/* 이동 수단 탭 */}
+      <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => switchMode('foot')}
           className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold transition ${
@@ -162,18 +180,33 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
           🚶 도보
         </button>
         <button
-          onClick={() => switchMode('driving')}
+          onClick={() => switchMode('car')}
           className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold transition ${
-            mode === 'driving'
+            mode === 'car'
               ? 'bg-[#f5c518] text-white'
               : 'bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518]'
           }`}
         >
           🚗 자동차
         </button>
+        <a
+          href={transitUrl}
+          target="_blank"
+          rel="noopener"
+          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518] transition"
+        >
+          🚌 카카오 대중교통 <ExternalLink size={12} />
+        </a>
+        <a
+          href={naverTransitUrl}
+          target="_blank"
+          rel="noopener"
+          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-white border border-[#ececec] text-[#666] hover:border-[#f5c518] transition"
+        >
+          🚇 네이버 대중교통 <ExternalLink size={12} />
+        </a>
       </div>
 
-      {/* 경로 정보 */}
       {loading && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
           📍 경로를 계산하는 중...
@@ -185,13 +218,13 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
         </div>
       )}
       {route && (
-        <div className="bg-white border border-[#ececec] rounded-2xl p-4 flex items-center gap-6 shadow-sm">
+        <div className="bg-white border border-[#ececec] rounded-2xl p-4 flex items-center gap-6 shadow-sm flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-full bg-[#fef3c7] flex items-center justify-center">
               <RouteIcon size={18} className="text-[#92400e]" />
             </div>
             <div>
-              <p className="text-xs text-[#aaa]">거리</p>
+              <p className="text-xs text-[#aaa]">총 거리</p>
               <p className="text-base font-bold text-[#2d2d2d]">{formatDistance(route.distance)}</p>
             </div>
           </div>
@@ -216,11 +249,57 @@ export default function RouteMap({ name, dstLat, dstLng, addr }: Props) {
         </div>
       )}
 
-      {/* 지도 */}
-      <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '600px' }} />
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* 지도 */}
+        <div className="lg:w-3/5">
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
+        </div>
+
+        {/* 턴바이턴 안내 */}
+        <div className="lg:w-2/5 bg-white border border-[#ececec] rounded-2xl p-4 overflow-y-auto" style={{ maxHeight: '550px' }}>
+          <h3 className="text-sm font-bold text-[#2d2d2d] mb-3 flex items-center gap-2">
+            <MapPin size={16} className="text-[#f5c518]" />
+            상세 길찾기 ({mode === 'foot' ? '도보' : '자동차'})
+          </h3>
+          {!route && !loading && (
+            <p className="text-xs text-[#aaa] text-center py-6">경로 안내가 없습니다.</p>
+          )}
+          {route && route.steps.length === 0 && (
+            <p className="text-xs text-[#aaa] text-center py-6">상세 안내가 제공되지 않습니다.</p>
+          )}
+          <ol className="flex flex-col gap-2">
+            {route?.steps.map((step, i) => (
+              <li
+                key={i}
+                onClick={() => focusStep(step)}
+                className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-[#fffbee] cursor-pointer transition"
+              >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                  i === 0 ? 'bg-blue-100 text-blue-700' :
+                  i === route.steps.length - 1 ? 'bg-green-100 text-green-700' :
+                  'bg-[#fef3c7] text-[#92400e]'
+                }`}>
+                  {i === 0 ? '출발' : i === route.steps.length - 1 ? '도착' : i}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[#2d2d2d] leading-snug">{step.instruction || '이동'}</p>
+                  {(step.distance > 0 || step.duration > 0) && (
+                    <p className="text-xs text-[#aaa] mt-0.5">
+                      {step.distance > 0 && formatDistance(step.distance)}
+                      {step.distance > 0 && step.duration > 0 && ' · '}
+                      {step.duration > 0 && formatDuration(step.duration)}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight size={14} className="text-[#ccc] mt-1.5 flex-shrink-0" />
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
 
       <p className="text-xs text-[#aaa] text-center">
-        경로 데이터: <a href="https://project-osrm.org" target="_blank" rel="noopener" className="hover:underline">OSRM</a> · 지도: OpenStreetMap
+        도보: OSRM · 자동차: 카카오 모빌리티 · 대중교통: 카카오/네이버맵 (외부) · 지도: OpenStreetMap
       </p>
     </div>
   )
