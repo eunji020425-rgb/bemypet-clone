@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints, PawPrint } from 'lucide-react'
+import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints, PawPrint, Map as MapIcon } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -36,7 +36,8 @@ export default function Header() {
         </Link>
 
         {/* 데스크탑 메뉴 */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#444]">
+        <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-[#444]">
+          <Link href="/map" className="hover:text-[#f5c518] transition-colors flex items-center gap-1 font-bold text-[#f5c518]"><MapIcon size={14}/>지도</Link>
           <Link href="/" className="hover:text-[#f5c518] transition-colors">홈</Link>
           <Link href="/community" className="hover:text-[#f5c518] transition-colors">커뮤니티</Link>
           <Link href="/chat" className="hover:text-[#f5c518] transition-colors">실시간채팅</Link>
@@ -84,6 +85,7 @@ export default function Header() {
       {/* 모바일 메뉴 */}
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-[#ececec] px-4 py-3 flex flex-col gap-3 text-sm font-medium text-[#444]">
+          <Link href="/map" onClick={() => setMenuOpen(false)} className="text-[#f5c518] font-bold">🗺️ 통합 지도</Link>
           <Link href="/" onClick={() => setMenuOpen(false)}>홈</Link>
           <Link href="/community" onClick={() => setMenuOpen(false)}>커뮤니티</Link>
           <Link href="/chat" onClick={() => setMenuOpen(false)}>실시간채팅</Link>

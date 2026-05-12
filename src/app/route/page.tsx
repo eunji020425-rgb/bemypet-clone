@@ -28,10 +28,12 @@ export default async function RoutePage({
   const backHref =
     from === 'hospital' ? '/hospital' :
     from === 'pet-places' ? '/pet-places' :
+    from === 'map' ? '/map' :
     '/walk'
   const backLabel =
     from === 'hospital' ? '동물병원' :
     from === 'pet-places' ? '애견 동반 장소' :
+    from === 'map' ? '통합 지도' :
     '산책로'
 
   return (
