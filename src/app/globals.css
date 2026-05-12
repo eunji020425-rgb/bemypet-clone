@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: 'KOTRAHOPE';
-  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/KOTRAHOPE.woff2') format('woff2');
+  font-family: 'Cafe24Ssurround';
+  src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Ssurround/Cafe24Ssurround.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -45,7 +45,7 @@
 
 html {
   font-size: 20px;
-  font-family: 'KOTRAHOPE', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Cafe24Ssurround', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* 작은 텍스트 최소 크기 보정 (text-xs, text-sm이 너무 작아 보이는 문제) */
@@ -55,7 +55,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'KOTRAHOPE', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Cafe24Ssurround', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   letter-spacing: -0.2px;
   line-height: 1.6;
   background-image:
@@ -67,12 +67,12 @@ body {
 }
 
 .serif {
-  font-family: 'KOTRAHOPE', 'Pretendard', sans-serif;
+  font-family: 'Cafe24Ssurround', 'Pretendard', sans-serif;
   font-weight: 400;
 }
 
 *, *::before, *::after {
-  font-family: 'KOTRAHOPE', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Cafe24Ssurround', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .glass {

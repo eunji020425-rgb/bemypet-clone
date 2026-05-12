@@ -20,7 +20,7 @@ export default function RootLayout({
           rel="preload"
           as="font"
           type="font/woff2"
-          href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2110@1.0/KOTRAHOPE.woff2"
+          href="https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Ssurround/Cafe24Ssurround.woff2"
           crossOrigin=""
         />
       </head>
