@@ -20,7 +20,7 @@ export default function RootLayout({
           rel="preload"
           as="font"
           type="font/woff2"
-          href="https://cdn.jsdelivr.net/gh/projectnoonnu/2403-2@1.0/KCC-Hanbit.woff2"
+          href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/iceHimchan-Rg.woff2"
           crossOrigin=""
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
