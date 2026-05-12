@@ -49,6 +49,12 @@ export default async function AdminPage() {
     supabase.from('profiles').select('id, email, nickname, is_admin, created_at').order('created_at', { ascending: false }).limit(20),
   ])
 
+  const { data: recentChat } = await supabase
+    .from('chat_messages')
+    .select('id, content, user_id, hidden, created_at, profiles(nickname)')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
   const stats = {
     users: usersRes.count ?? 0,
     posts: postsRes.count ?? 0,
@@ -66,6 +72,7 @@ export default async function AdminPage() {
       adminNickname={profile.nickname}
       recentPosts={recentPostsRes.data ?? []}
       recentUsers={recentUsersRes.data ?? []}
+      recentChat={recentChat ?? []}
     />
   )
 }

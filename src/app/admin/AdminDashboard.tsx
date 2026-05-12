@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Users, MessageSquare, MessagesSquare, Database, Trash2, Shield, ShieldOff,
-  FileText, BarChart3, AlertTriangle,
+  FileText, BarChart3, AlertTriangle, Eye, EyeOff,
 } from 'lucide-react'
 
 interface Stats {
@@ -33,15 +33,25 @@ interface RecentUser {
   created_at: string
 }
 
+interface ChatMsg {
+  id: string
+  content: string
+  user_id: string
+  hidden: boolean
+  created_at: string
+  profiles?: any
+}
+
 interface Props {
   stats: Stats
   currentUserId: string
   adminNickname: string
   recentPosts: RecentPost[]
   recentUsers: RecentUser[]
+  recentChat: ChatMsg[]
 }
 
-type Tab = 'overview' | 'posts' | 'users' | 'cache'
+type Tab = 'overview' | 'posts' | 'users' | 'chat' | 'cache'
 
 export default function AdminDashboard({
   stats,
@@ -49,11 +59,13 @@ export default function AdminDashboard({
   adminNickname,
   recentPosts: initialPosts,
   recentUsers: initialUsers,
+  recentChat: initialChat,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('overview')
   const [posts, setPosts] = useState(initialPosts)
   const [users, setUsers] = useState(initialUsers)
+  const [chat, setChat] = useState(initialChat)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -116,6 +128,22 @@ export default function AdminDashboard({
     }
   }
 
+  const toggleHideChat = async (id: string, currentlyHidden: boolean) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/chat/${id}/toggle-hide`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        setChat(prev => prev.map(c => c.id === id ? { ...c, hidden: data.hidden } : c))
+        showMessage(currentlyHidden ? '메시지가 다시 표시됩니다.' : '메시지가 숨김 처리되었습니다.')
+      } else {
+        showMessage('실패했습니다.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const cleanOldCache = async () => {
     if (!confirm('30일 이상된 캐시를 정리하시겠습니까?')) return
     setLoading(true)
@@ -157,6 +185,7 @@ export default function AdminDashboard({
           { id: 'overview' as const, label: '개요', icon: BarChart3 },
           { id: 'posts' as const, label: '게시글', icon: FileText },
           { id: 'users' as const, label: '사용자', icon: Users },
+          { id: 'chat' as const, label: '실시간채팅', icon: MessagesSquare },
           { id: 'cache' as const, label: '캐시', icon: Database },
         ].map(t => {
           const Icon = t.icon
@@ -258,6 +287,51 @@ export default function AdminDashboard({
                     {u.is_admin ? (<><ShieldOff size={12} />권한 해제</>) : (<><Shield size={12} />관리자 부여</>)}
                   </button>
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 실시간 채팅 관리 탭 */}
+      {tab === 'chat' && (
+        <div className="bg-white rounded-2xl border border-[#ececec] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#ececec] flex items-center justify-between">
+            <p className="text-sm font-bold text-[#2d2d2d]">최근 채팅 메시지 ({chat.length})</p>
+            <p className="text-xs text-[#aaa]">숨김 처리하면 일반 사용자에게 즉시 안 보이게 됩니다</p>
+          </div>
+          <div className="divide-y divide-[#ececec]">
+            {chat.length === 0 && <p className="text-center py-10 text-sm text-[#aaa]">채팅 메시지가 없습니다.</p>}
+            {chat.map(c => (
+              <div key={c.id} className={`flex items-start justify-between gap-3 px-4 py-3 ${c.hidden ? 'bg-gray-50' : ''}`}>
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${c.hidden ? 'bg-gray-200 text-gray-500' : 'bg-[#f5e97a] text-[#7a6a00]'}`}>
+                    {(c.profiles as any)?.nickname?.[0] ?? '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium text-[#2d2d2d]">{(c.profiles as any)?.nickname ?? '익명'}</p>
+                      <p className="text-xs text-[#aaa]">{new Date(c.created_at).toLocaleString('ko-KR')}</p>
+                      {c.hidden && (
+                        <span className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
+                          <EyeOff size={10} />숨김
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-sm mt-0.5 break-words ${c.hidden ? 'text-[#aaa] line-through' : 'text-[#444]'}`}>{c.content}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => toggleHideChat(c.id, c.hidden)}
+                  disabled={loading}
+                  className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition disabled:opacity-50 flex-shrink-0 ${
+                    c.hidden
+                      ? 'text-blue-600 hover:bg-blue-50'
+                      : 'text-orange-600 hover:bg-orange-50'
+                  }`}
+                >
+                  {c.hidden ? (<><Eye size={12} />다시 표시</>) : (<><EyeOff size={12} />숨김</>)}
+                </button>
               </div>
             ))}
           </div>

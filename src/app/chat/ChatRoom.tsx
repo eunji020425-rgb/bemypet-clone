@@ -36,6 +36,8 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
         async (payload) => {
+          // 숨김 처리된 새 메시지는 표시 안 함
+          if ((payload.new as any).hidden) return
           // 새 메시지의 프로필 조회
           const { data: profile } = await supabase
             .from('profiles')
@@ -50,6 +52,16 @@ export default function ChatRoom({ initialMessages, userId, userNickname }: Prop
               : { nickname: '익명', avatar_url: null },
           }
           setMessages(prev => [...prev, newMsg])
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          // 관리자가 숨김 처리 → 화면에서 즉시 제거
+          if ((payload.new as any).hidden) {
+            setMessages(prev => prev.filter(m => m.id !== (payload.new as any).id))
+          }
         }
       )
       .subscribe()

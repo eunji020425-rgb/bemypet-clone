@@ -8,6 +8,7 @@ export default async function ChatPage() {
   const { data: messages } = await supabase
     .from('chat_messages')
     .select('*, profiles(nickname, avatar_url)')
+    .eq('hidden', false)
     .order('created_at', { ascending: true })
     .limit(100)
 
