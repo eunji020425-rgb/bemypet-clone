@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const runtime = 'edge'
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('query') || '동물병원'
@@ -11,6 +9,8 @@ export async function GET(request: Request) {
 
   const kakaoKey = process.env.KAKAO_REST_API_KEY
 
+  console.log('[hospitals] kakaoKey exists:', !!kakaoKey, 'lat:', lat, 'lng:', lng)
+
   // 1. 카카오 Local API 우선 (위치 기반 검색)
   if (kakaoKey && lat && lng) {
     try {
@@ -19,8 +19,14 @@ export async function GET(request: Request) {
         headers: { Authorization: `KakaoAK ${kakaoKey}` },
         next: { revalidate: 300 },
       })
+      console.log('[hospitals] kakao status:', res.status)
+      if (!res.ok) {
+        const errBody = await res.text()
+        console.error('[hospitals] kakao error body:', errBody)
+      }
       if (res.ok) {
         const data = await res.json()
+        console.log('[hospitals] kakao results:', data.documents?.length)
         const items = (data.documents || []).map((d: any) => ({
           id: `kakao-${d.id}`,
           name: d.place_name,
