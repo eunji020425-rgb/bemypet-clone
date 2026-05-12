@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Phone, Search, Navigation, ExternalLink } from 'lucide-react'
+import { Phone, Navigation, ExternalLink } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 
 interface Hospital {
@@ -11,92 +11,9 @@ interface Hospital {
   phone?: string
   lat: number
   lng: number
-  source: 'osm' | 'naver'
   distance?: number
   link?: string
-}
-
-function stripHtml(str: string) {
-  return str.replace(/<[^>]+>/g, '')
-}
-
-function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-// Overpass API로 위치 기반 동물병원 검색 (반경 단위: m)
-async function searchOverpass(lat: number, lng: number, radius: number): Promise<Hospital[]> {
-  const query = `[out:json][timeout:25];(node["amenity"="veterinary"](around:${radius},${lat},${lng});way["amenity"="veterinary"](around:${radius},${lat},${lng}););out center;`
-  try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-    })
-    const data = await res.json()
-    return (data.elements || []).map((el: any) => {
-      const elLat = el.lat ?? el.center?.lat
-      const elLon = el.lon ?? el.center?.lon
-      if (!elLat || !elLon) return null
-      const tags = el.tags || {}
-      const addrParts = [
-        tags['addr:province'], tags['addr:city'], tags['addr:district'],
-        tags['addr:street'], tags['addr:housenumber'], tags['addr:full']
-      ].filter(Boolean)
-      return {
-        id: `osm-${el.id}`,
-        name: tags.name || tags['name:ko'] || '동물병원',
-        address: addrParts.join(' ') || tags['addr:full'] || '',
-        phone: tags.phone || tags['contact:phone'],
-        lat: elLat,
-        lng: elLon,
-        source: 'osm' as const,
-      }
-    }).filter(Boolean) as Hospital[]
-  } catch {
-    return []
-  }
-}
-
-// 네이버 검색 보조 (전화번호 등 정보 보강)
-async function searchNaver(query: string): Promise<Hospital[]> {
-  try {
-    const res = await fetch(`/api/hospitals?query=${encodeURIComponent(query)}&display=5`)
-    const data = await res.json()
-    return (data.items || []).map((it: any, i: number) => {
-      const lat = parseInt(it.mapy) / 1e7
-      const lng = parseInt(it.mapx) / 1e7
-      return {
-        id: `naver-${i}-${it.title}`,
-        name: stripHtml(it.title),
-        address: it.roadAddress || it.address || '',
-        phone: it.telephone,
-        lat, lng,
-        source: 'naver' as const,
-        link: it.link,
-      }
-    }).filter((h: Hospital) => h.lat && h.lng)
-  } catch {
-    return []
-  }
-}
-
-// Nominatim 역지오코딩으로 지역명 추출
-async function getRegionName(lat: number, lng: number): Promise<string> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=10`
-    )
-    const data = await res.json()
-    const a = data.address || {}
-    // 한글 지역명 우선 (Nominatim이 한글로 안 줄 수도 있어서 fallback)
-    return a.city || a.town || a.county || a.borough || a.state || ''
-  } catch {
-    return ''
-  }
+  category?: string
 }
 
 export default function HospitalMap() {
@@ -114,38 +31,21 @@ export default function HospitalMap() {
   const fetchHospitals = async (lat: number, lng: number) => {
     setLoading(true)
     try {
-      // 1차: Overpass API로 위치 반경 검색 (5km → 없으면 20km → 50km로 자동 확장)
-      let radius = searchRadius
-      let osmResults = await searchOverpass(lat, lng, radius)
-      if (osmResults.length === 0) {
-        radius = 20000
-        osmResults = await searchOverpass(lat, lng, radius)
-      }
-      if (osmResults.length === 0) {
-        radius = 50000
-        osmResults = await searchOverpass(lat, lng, radius)
-      }
-      setSearchRadius(radius)
+      // 반경 자동 확장: 5km → 10km → 20km
+      const radii = [5000, 10000, 20000]
+      let items: Hospital[] = []
+      let usedRadius = 5000
 
-      // 2차: 네이버 검색으로 보강 (지역명 + 동물병원)
-      const region = await getRegionName(lat, lng)
-      const naverQuery = region ? `${region} 동물병원` : '동물병원'
-      const naverResults = await searchNaver(naverQuery)
-
-      // 병합 + 중복 제거 (이름 기준)
-      const seen = new Set<string>()
-      const combined: Hospital[] = []
-      for (const h of [...osmResults, ...naverResults]) {
-        const key = h.name.replace(/\s+/g, '').toLowerCase()
-        if (seen.has(key)) continue
-        seen.add(key)
-        const dist = calcDistance(lat, lng, h.lat, h.lng)
-        if (dist < 100) combined.push({ ...h, distance: dist })
+      for (const r of radii) {
+        const res = await fetch(`/api/hospitals?query=동물병원&lat=${lat}&lng=${lng}&radius=${r}`)
+        const data = await res.json()
+        items = data.items || []
+        usedRadius = r
+        if (items.length > 0) break
       }
-      combined.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0))
-
-      setHospitals(combined)
-      return combined
+      setSearchRadius(usedRadius)
+      setHospitals(items)
+      return items
     } finally {
       setLoading(false)
     }
@@ -180,20 +80,24 @@ export default function HospitalMap() {
       .bindPopup('📍 현재 위치')
     markersRef.current.push(myMarker)
 
-    // 병원 핀 마커
+    // 병원 핀
     items.forEach((h, i) => {
       const icon = L.divIcon({
-        html: `<div style="background:#ef4444;color:white;min-width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer"><span style="transform:rotate(45deg);font-size:14px;font-weight:bold">🐾</span></div>`,
-        className: '', iconAnchor: [16, 32],
+        html: `<div style="position:relative;width:36px;height:42px;cursor:pointer">
+          <div style="background:#ef4444;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:absolute;top:0;left:0;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
+            <span style="transform:rotate(45deg);font-size:11px;font-weight:bold;color:white">${i + 1}</span>
+          </div>
+        </div>`,
+        className: '', iconAnchor: [18, 42],
       })
       const marker = L.marker([h.lat, h.lng], { icon })
         .addTo(mapInstanceRef.current)
-        .bindPopup(`<b>${h.name}</b><br/>${h.address}${h.phone ? `<br/>📞 ${h.phone}` : ''}`)
+        .bindPopup(`<b>${h.name}</b><br/>${h.address ?? ''}${h.phone ? `<br/>📞 ${h.phone}` : ''}`)
       marker.on('click', () => setSelected(h))
       markersRef.current.push(marker)
     })
 
-    // 지도 범위를 모든 마커에 맞춤
+    // 자동 줌
     if (items.length > 0) {
       const bounds = L.latLngBounds([[lat, lng], ...items.map(h => [h.lat, h.lng] as [number, number])])
       mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
@@ -252,13 +156,13 @@ export default function HospitalMap() {
       )}
       {locStatus === 'success' && userPos && (
         <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-700 flex items-center justify-between">
-          <span>✅ 현재 위치 기준 검색 중 (반경 {(searchRadius/1000).toFixed(0)}km)</span>
+          <span>✅ 현재 위치 기준 반경 {(searchRadius/1000).toFixed(0)}km 내 동물병원</span>
           <button onClick={locate} className="text-green-700 hover:underline font-bold">새로고침</button>
         </div>
       )}
       {(locStatus === 'denied' || locStatus === 'fallback') && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 text-xs text-amber-700 flex items-center justify-between gap-2">
-          <span>⚠️ {locError} 서울 기준으로 표시 중입니다.</span>
+          <span>⚠️ {locError} 서울 기준 표시</span>
           <button onClick={locate} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
             다시 시도
           </button>
@@ -273,7 +177,7 @@ export default function HospitalMap() {
 
         {/* 병원 목록 */}
         <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '550px' }}>
-          <p className="text-xs text-[#aaa] px-1 pb-1">총 {hospitals.length}개의 동물병원이 검색되었습니다</p>
+          <p className="text-xs text-[#aaa] px-1 pb-1">총 {hospitals.length}개의 동물병원</p>
           {loading && hospitals.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">
               <div className="text-3xl mb-2 animate-bounce">🐾</div>
@@ -296,7 +200,7 @@ export default function HospitalMap() {
                 className={`bg-white rounded-xl p-3 border cursor-pointer transition-colors ${isSelected ? 'border-[#f5c518] shadow-md' : 'border-[#ececec] hover:border-[#f5c518]'}`}
               >
                 <div className="flex items-start gap-2">
-                  <div className="text-xl flex-shrink-0">🐾</div>
+                  <div className="w-7 h-7 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-[#2d2d2d] truncate">{h.name}</p>
@@ -320,12 +224,13 @@ export default function HospitalMap() {
         </div>
       </div>
 
-      {/* 선택된 병원 상세 */}
+      {/* 선택 병원 상세 */}
       {selected && (
         <div className="bg-[#fffbee] border border-[#f5c518] rounded-2xl p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <h3 className="font-bold text-[#2d2d2d]">🐾 {selected.name}</h3>
+              {selected.category && <p className="text-xs text-[#aaa] mt-0.5">{selected.category}</p>}
               {selected.address && <p className="text-sm text-[#666] mt-1">{selected.address}</p>}
               <div className="flex flex-wrap gap-3 mt-2">
                 {selected.phone && (
@@ -335,7 +240,7 @@ export default function HospitalMap() {
                 )}
                 {selected.link && (
                   <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-blue-500 font-bold flex items-center gap-1">
-                    <ExternalLink size={13} />상세 정보
+                    <ExternalLink size={13} />카카오맵
                   </a>
                 )}
                 <a

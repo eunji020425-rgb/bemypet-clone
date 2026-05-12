@@ -5,30 +5,74 @@ export const runtime = 'edge'
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('query') || '동물병원'
-  const display = searchParams.get('display') || '20'
+  const lat = searchParams.get('lat')
+  const lng = searchParams.get('lng')
+  const radius = searchParams.get('radius') || '20000'
 
-  const clientId = process.env.NAVER_CLIENT_ID
-  const clientSecret = process.env.NAVER_CLIENT_SECRET
+  const kakaoKey = process.env.KAKAO_REST_API_KEY
 
-  if (!clientId || !clientSecret) {
-    return NextResponse.json({ error: 'Naver API keys not configured' }, { status: 500 })
-  }
-
-  const res = await fetch(
-    `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${display}&sort=random`,
-    {
-      headers: {
-        'X-Naver-Client-Id': clientId,
-        'X-Naver-Client-Secret': clientSecret,
-      },
-      next: { revalidate: 300 },
+  // 1. 카카오 Local API 우선 (위치 기반 검색)
+  if (kakaoKey && lat && lng) {
+    try {
+      const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&x=${lng}&y=${lat}&radius=${radius}&sort=distance&size=15`
+      const res = await fetch(url, {
+        headers: { Authorization: `KakaoAK ${kakaoKey}` },
+        next: { revalidate: 300 },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const items = (data.documents || []).map((d: any) => ({
+          id: `kakao-${d.id}`,
+          name: d.place_name,
+          address: d.road_address_name || d.address_name,
+          phone: d.phone,
+          lat: parseFloat(d.y),
+          lng: parseFloat(d.x),
+          distance: parseFloat(d.distance) / 1000,
+          category: d.category_name,
+          link: d.place_url,
+          source: 'kakao',
+        }))
+        return NextResponse.json({ items })
+      }
+    } catch (e) {
+      console.error('Kakao API error:', e)
     }
-  )
-
-  if (!res.ok) {
-    return NextResponse.json({ error: 'Naver API error' }, { status: res.status })
   }
 
-  const data = await res.json()
-  return NextResponse.json(data)
+  // 2. 네이버 Local Search 폴백
+  const naverClientId = process.env.NAVER_CLIENT_ID
+  const naverSecret = process.env.NAVER_CLIENT_SECRET
+  if (naverClientId && naverSecret) {
+    try {
+      const res = await fetch(
+        `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=5&sort=random`,
+        {
+          headers: {
+            'X-Naver-Client-Id': naverClientId,
+            'X-Naver-Client-Secret': naverSecret,
+          },
+          next: { revalidate: 300 },
+        }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        const items = (data.items || []).map((it: any, i: number) => ({
+          id: `naver-${i}-${it.title}`,
+          name: it.title.replace(/<[^>]+>/g, ''),
+          address: it.roadAddress || it.address,
+          phone: it.telephone,
+          lat: parseInt(it.mapy) / 1e7,
+          lng: parseInt(it.mapx) / 1e7,
+          link: it.link,
+          source: 'naver',
+        }))
+        return NextResponse.json({ items })
+      }
+    } catch (e) {
+      console.error('Naver API error:', e)
+    }
+  }
+
+  return NextResponse.json({ items: [], error: 'No API configured' }, { status: 200 })
 }
