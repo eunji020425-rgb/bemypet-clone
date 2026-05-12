@@ -62,8 +62,12 @@ body {
 }
 
 .serif {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'KOTRAHOPE', 'Pretendard', sans-serif;
   font-weight: 400;
+}
+
+* {
+  font-family: inherit !important;
 }
 
 .glass {
