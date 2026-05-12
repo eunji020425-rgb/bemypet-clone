@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const MODEL_CHAIN = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+const MODEL_CHAIN = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+]
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +38,6 @@ export async function POST(request: Request) {
 장소:
 ${parks.map((p: any, i: number) => `${i + 1}. ${p.name} (${p.address})`).join('\n')}`
 
-    // 모델 폴백 체인 시도
     let text = ''
     for (const modelName of MODEL_CHAIN) {
       try {
@@ -42,14 +47,10 @@ ${parks.map((p: any, i: number) => `${i + 1}. ${p.name} (${p.address})`).join('\
         })
         const result = await model.generateContent(prompt)
         text = result.response.text()
-        break
+        if (text) break
       } catch (e: any) {
-        const msg = String(e?.message || '')
-        if (msg.includes('429') || msg.includes('quota') || msg.includes('503') || msg.includes('overloaded')) {
-          console.log(`[walk] ${modelName} unavailable, trying next...`)
-          continue
-        }
-        throw e
+        console.log(`[walk] ${modelName} failed: ${e?.message?.slice(0, 200)}`)
+        continue
       }
     }
 
