@@ -1,12 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fdf8f0;
-  --foreground: #2d2d2d;
-  --yellow: #f5c518;
-  --yellow-dark: #e0b010;
-  --border: #ececec;
-  --text-sub: #888888;
+  /* Soft Green Glow Palette */
+  --background: #fdfaf0;
+  --foreground: #2d3a22;
+  --ink-soft: #6b7560;
+
+  /* 메인 그린 톤 */
+  --green-1: #e8f3d0;
+  --green-2: #d4e8b0;
+  --green-3: #b8d990;
+  --green-4: #94c068;
+  --green-deep: #5a7a3a;
+
+  /* 따뜻한 액센트 */
+  --cream: #fdfaf0;
+  --warm: #f5ead4;
+
+  /* 기존 yellow 호환 (점진적 마이그레이션용) */
+  --yellow: #94c068;
+  --yellow-dark: #5a7a3a;
+
+  --border: #e8e3d0;
+  --text-sub: #6b7560;
 }
 
 @theme inline {
@@ -15,10 +31,32 @@
   --color-yellow: var(--yellow);
   --color-yellow-dark: var(--yellow-dark);
   --color-border: var(--border);
+  --color-green-deep: var(--green-deep);
+  --color-cream: var(--cream);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.2px;
+  line-height: 1.5;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(212,232,176,0.35) 0, transparent 45%),
+    radial-gradient(ellipse at 80% 60%, rgba(184,217,144,0.28) 0, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(232,243,208,0.45) 0, transparent 45%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.serif {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }

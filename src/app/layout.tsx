@@ -3,7 +3,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "PetTogether - 우리 아이의 시간을 더 행복하게",
+  title: "PetTogether - 반려동물과의 평화로운 일상",
   description: "반려동물 커뮤니티 - 정보 공유, 자유게시판, 실시간 채팅, 동물병원 찾기, AI닥터",
 };
 
@@ -14,10 +14,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[#fdf8f0]">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col">
         <Header />
         <main className="flex-1">{children}</main>
-        <footer className="text-center text-xs text-[#aaa] py-6 border-t border-[#ececec] mt-10">
+        <footer className="text-center text-xs text-[#6b7560] py-8 mt-10">
           © 2024 PetTogether. All rights reserved.
         </footer>
       </body>
