@@ -64,47 +64,17 @@ export default function PetPlacesMap() {
   const [showResearchBtn, setShowResearchBtn] = useState(false)
   const [enriching, setEnriching] = useState(false)
 
-  const enrichWithGemini = async (items: Place[]) => {
-    if (items.length === 0) return
-    setEnriching(true)
-    try {
-      const res = await fetch('/api/gemini/pet-places', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ places: items }),
-      })
-      const data = await res.json()
-      const enrichments = data.enrichments || []
-      setPlaces(prev =>
-        prev.map((p, i) => {
-          const e = enrichments[i]
-          if (!e) return { ...p, enriching: false }
-          return {
-            ...p,
-            vaccination: e.vaccination,
-            carrierRequired: e.carrierRequired,
-            diningArea: e.diningArea,
-            sizeLimit: e.sizeLimit,
-            hasOutdoorPlayground: e.hasOutdoorPlayground,
-            grassType: e.grassType,
-            playgroundSize: e.playgroundSize,
-            sizeSeparation: e.sizeSeparation,
-            feeInfo: e.feeInfo,
-            hours: e.hours,
-            rules: Array.isArray(e.rules) ? e.rules : [],
-            summary: e.summary,
-            enriching: false,
-          }
-        })
-      )
-      setSelected(prev => {
-        if (!prev) return prev
-        const idx = items.findIndex(it => it.id === prev.id)
-        if (idx === -1) return prev
-        const e = enrichments[idx]
-        if (!e) return prev
+  const applyEnrichment = (batch: Place[], enrichments: any[]) => {
+    const byId = new Map<string, any>()
+    batch.forEach((p, i) => {
+      if (enrichments[i]) byId.set(p.id, enrichments[i])
+    })
+    setPlaces(prev =>
+      prev.map(p => {
+        const e = byId.get(p.id)
+        if (!e) return p
         return {
-          ...prev,
+          ...p,
           vaccination: e.vaccination,
           carrierRequired: e.carrierRequired,
           diningArea: e.diningArea,
@@ -117,8 +87,57 @@ export default function PetPlacesMap() {
           hours: e.hours,
           rules: Array.isArray(e.rules) ? e.rules : [],
           summary: e.summary,
+          enriching: false,
         }
       })
+    )
+    setSelected(prev => {
+      if (!prev) return prev
+      const e = byId.get(prev.id)
+      if (!e) return prev
+      return {
+        ...prev,
+        vaccination: e.vaccination,
+        carrierRequired: e.carrierRequired,
+        diningArea: e.diningArea,
+        sizeLimit: e.sizeLimit,
+        hasOutdoorPlayground: e.hasOutdoorPlayground,
+        grassType: e.grassType,
+        playgroundSize: e.playgroundSize,
+        sizeSeparation: e.sizeSeparation,
+        feeInfo: e.feeInfo,
+        hours: e.hours,
+        rules: Array.isArray(e.rules) ? e.rules : [],
+        summary: e.summary,
+      }
+    })
+  }
+
+  const enrichWithGemini = async (items: Place[]) => {
+    if (items.length === 0) return
+    setEnriching(true)
+    try {
+      // 작은 배치(4개씩)로 쪼개서 병렬 호출 - 결과가 들어오는 대로 즉시 UI 반영
+      const BATCH_SIZE = 4
+      const batches: Place[][] = []
+      for (let i = 0; i < items.length; i += BATCH_SIZE) {
+        batches.push(items.slice(i, i + BATCH_SIZE))
+      }
+      await Promise.all(
+        batches.map(async batch => {
+          try {
+            const res = await fetch('/api/gemini/pet-places', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ places: batch }),
+            })
+            const data = await res.json()
+            applyEnrichment(batch, data.enrichments || [])
+          } catch {
+            // 실패해도 다른 배치는 계속
+          }
+        })
+      )
     } finally {
       setEnriching(false)
     }
