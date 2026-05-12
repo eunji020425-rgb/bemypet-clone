@@ -1,7 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-export const runtime = 'edge'
-
 const SYSTEM_PROMPT = `당신은 10년 이상 경력의 전문 수의사입니다. 반려동물 보호자의 질문에 친절하고 전문적으로 답변합니다.
 
 원칙:
@@ -12,43 +10,56 @@ const SYSTEM_PROMPT = `당신은 10년 이상 경력의 전문 수의사입니�
 - 한국어로 간결하고 이해하기 쉽게 답변`
 
 export async function POST(request: Request) {
-  const { messages } = await request.json()
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'Gemini API key not configured' }), { status: 500 })
-  }
+  try {
+    const { messages } = await request.json()
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'Gemini API key not configured' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
 
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
-    systemInstruction: SYSTEM_PROMPT,
-  })
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      systemInstruction: SYSTEM_PROMPT,
+    })
 
-  const recentMessages = messages.slice(-6)
-  const history = recentMessages.slice(0, -1).map((m: { role: string; content: string }) => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.content }],
-  }))
+    const recentMessages = messages.slice(-6)
+    const history = recentMessages.slice(0, -1).map((m: { role: string; content: string }) => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }],
+    }))
 
-  const chat = model.startChat({ history })
-  const lastMessage = recentMessages[recentMessages.length - 1].content
-  const result = await chat.sendMessageStream(lastMessage)
+    const chat = model.startChat({ history })
+    const lastMessage = recentMessages[recentMessages.length - 1].content
+    const result = await chat.sendMessageStream(lastMessage)
 
-  const encoder = new TextEncoder()
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const chunk of result.stream) {
-          const text = chunk.text()
-          if (text) controller.enqueue(encoder.encode(text))
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) controller.enqueue(encoder.encode(text))
+          }
+        } catch (e) {
+          console.error('Stream error:', e)
+        } finally {
+          controller.close()
         }
-      } finally {
-        controller.close()
-      }
-    },
-  })
+      },
+    })
 
-  return new Response(stream, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' },
-  })
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' },
+    })
+  } catch (e: any) {
+    console.error('Doctor API error:', e)
+    return new Response(JSON.stringify({ error: e.message || 'Unknown error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 }

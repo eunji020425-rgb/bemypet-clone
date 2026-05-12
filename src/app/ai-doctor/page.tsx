@@ -45,6 +45,15 @@ export default function AIDoctorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages }),
       })
+      const contentType = res.headers.get('content-type') || ''
+      if (!res.ok || !contentType.includes('text/plain')) {
+        let errMsg = '오류가 발생했습니다. 다시 시도해주세요.'
+        if (contentType.includes('application/json')) {
+          const j = await res.json()
+          errMsg = j.error || errMsg
+        }
+        throw new Error(errMsg)
+      }
       if (!res.body) throw new Error('No stream')
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -59,10 +68,10 @@ export default function AIDoctorPage() {
           return copy
         })
       }
-    } catch {
+    } catch (err: any) {
       setMessages(prev => {
         const copy = [...prev]
-        copy[copy.length - 1] = { role: 'assistant', content: '오류가 발생했습니다. 다시 시도해주세요.' }
+        copy[copy.length - 1] = { role: 'assistant', content: `⚠️ ${err.message || '오류가 발생했습니다. 다시 시도해주세요.'}` }
         return copy
       })
     } finally {
