@@ -25,8 +25,14 @@ export default async function RoutePage({
     )
   }
 
-  const backHref = from === 'hospital' ? '/hospital' : '/walk'
-  const backLabel = from === 'hospital' ? '동물병원' : '산책로'
+  const backHref =
+    from === 'hospital' ? '/hospital' :
+    from === 'pet-places' ? '/pet-places' :
+    '/walk'
+  const backLabel =
+    from === 'hospital' ? '동물병원' :
+    from === 'pet-places' ? '애견 동반 장소' :
+    '산책로'
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
