@@ -5,18 +5,33 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints, PawPrint, Map as MapIcon } from 'lucide-react'
+import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints, PawPrint, Map as MapIcon, Shield } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
+  const checkAdmin = async (u: User | null) => {
+    if (!u) { setIsAdmin(false); return }
+    const { data } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', u.id)
+      .single()
+    setIsAdmin(!!data?.is_admin)
+  }
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      checkAdmin(data.user)
+    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      checkAdmin(session?.user ?? null)
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -42,6 +57,11 @@ export default function Header() {
           <Link href="/community" className="hover:text-[#f5c518] transition-colors">커뮤니티</Link>
           <Link href="/chat" className="hover:text-[#f5c518] transition-colors">실시간채팅</Link>
           <Link href="/ai-doctor" className="hover:text-[#f5c518] transition-colors flex items-center gap-1"><Stethoscope size={14}/>AI닥터</Link>
+          {isAdmin && (
+            <Link href="/admin" className="text-red-500 hover:text-red-600 transition-colors flex items-center gap-1 font-bold">
+              <Shield size={14}/>관리자
+            </Link>
+          )}
         </nav>
 
         {/* 우측 버튼 영역 */}
@@ -87,6 +107,11 @@ export default function Header() {
           <Link href="/community" onClick={() => setMenuOpen(false)}>커뮤니티</Link>
           <Link href="/chat" onClick={() => setMenuOpen(false)}>실시간채팅</Link>
           <Link href="/ai-doctor" onClick={() => setMenuOpen(false)}>AI닥터</Link>
+          {isAdmin && (
+            <Link href="/admin" onClick={() => setMenuOpen(false)} className="text-red-500 font-bold">
+              🛡️ 관리자 페이지
+            </Link>
+          )}
           {user && (
             <Link href="/community/write" onClick={() => setMenuOpen(false)} className="text-[#f5c518] font-bold">
               글쓰기
