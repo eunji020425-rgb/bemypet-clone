@@ -55,6 +55,12 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
+  const { data: recentComments } = await supabase
+    .from('comments')
+    .select('id, content, post_id, user_id, created_at, profiles(nickname), posts(title)')
+    .order('created_at', { ascending: false })
+    .limit(30)
+
   const stats = {
     users: usersRes.count ?? 0,
     posts: postsRes.count ?? 0,
@@ -73,6 +79,7 @@ export default async function AdminPage() {
       recentPosts={recentPostsRes.data ?? []}
       recentUsers={recentUsersRes.data ?? []}
       recentChat={recentChat ?? []}
+      recentComments={recentComments ?? []}
     />
   )
 }

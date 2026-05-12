@@ -42,6 +42,16 @@ interface ChatMsg {
   profiles?: any
 }
 
+interface RecentComment {
+  id: string
+  content: string
+  post_id: string
+  user_id: string
+  created_at: string
+  profiles?: any
+  posts?: any
+}
+
 interface Props {
   stats: Stats
   currentUserId: string
@@ -49,9 +59,10 @@ interface Props {
   recentPosts: RecentPost[]
   recentUsers: RecentUser[]
   recentChat: ChatMsg[]
+  recentComments: RecentComment[]
 }
 
-type Tab = 'overview' | 'posts' | 'users' | 'chat' | 'cache'
+type Tab = 'overview' | 'posts' | 'comments' | 'users' | 'chat' | 'cache'
 
 export default function AdminDashboard({
   stats,
@@ -60,12 +71,14 @@ export default function AdminDashboard({
   recentPosts: initialPosts,
   recentUsers: initialUsers,
   recentChat: initialChat,
+  recentComments: initialComments,
 }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('overview')
   const [posts, setPosts] = useState(initialPosts)
   const [users, setUsers] = useState(initialUsers)
   const [chat, setChat] = useState(initialChat)
+  const [comments, setComments] = useState(initialComments)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -128,6 +141,22 @@ export default function AdminDashboard({
     }
   }
 
+  const deleteComment = async (id: string) => {
+    if (!confirm('이 댓글을 삭제하시겠습니까?')) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/comments/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setComments(prev => prev.filter(c => c.id !== id))
+        showMessage('댓글이 삭제되었습니다.')
+      } else {
+        showMessage('삭제에 실패했습니다.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const toggleHideChat = async (id: string, currentlyHidden: boolean) => {
     setLoading(true)
     try {
@@ -184,6 +213,7 @@ export default function AdminDashboard({
         {[
           { id: 'overview' as const, label: '개요', icon: BarChart3 },
           { id: 'posts' as const, label: '게시글', icon: FileText },
+          { id: 'comments' as const, label: '댓글', icon: MessageSquare },
           { id: 'users' as const, label: '사용자', icon: Users },
           { id: 'chat' as const, label: '실시간채팅', icon: MessagesSquare },
           { id: 'cache' as const, label: '캐시', icon: Database },
@@ -239,6 +269,44 @@ export default function AdminDashboard({
                   onClick={() => deletePost(p.id, p.title)}
                   disabled={loading}
                   className="flex items-center gap-1 text-xs text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-full transition disabled:opacity-50"
+                >
+                  <Trash2 size={12} />삭제
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 댓글 관리 탭 */}
+      {tab === 'comments' && (
+        <div className="bg-white rounded-2xl border border-[#ececec] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#ececec] text-sm font-bold text-[#2d2d2d]">
+            최근 댓글 ({comments.length})
+          </div>
+          <div className="divide-y divide-[#ececec]">
+            {comments.length === 0 && <p className="text-center py-10 text-sm text-[#aaa]">댓글이 없습니다.</p>}
+            {comments.map(c => (
+              <div key={c.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-[#f5e97a] text-[#7a6a00] flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    {(c.profiles as any)?.nickname?.[0] ?? '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs font-medium text-[#2d2d2d]">{(c.profiles as any)?.nickname ?? '익명'}</p>
+                      <p className="text-xs text-[#aaa]">{new Date(c.created_at).toLocaleString('ko-KR')}</p>
+                    </div>
+                    {(c.posts as any)?.title && (
+                      <p className="text-xs text-[#aaa] mt-0.5">📄 <a href={`/community/${c.post_id}`} target="_blank" className="hover:underline">{(c.posts as any).title}</a></p>
+                    )}
+                    <p className="text-sm text-[#444] mt-1 break-words">{c.content}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => deleteComment(c.id)}
+                  disabled={loading}
+                  className="flex items-center gap-1 text-xs text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-full transition disabled:opacity-50 flex-shrink-0"
                 >
                   <Trash2 size={12} />삭제
                 </button>
