@@ -31,21 +31,28 @@ export default function HospitalMap() {
   const fetchHospitals = async (lat: number, lng: number) => {
     setLoading(true)
     try {
-      // 반경 자동 확장: 5km → 10km → 20km
-      const radii = [5000, 10000, 20000]
-      let items: Hospital[] = []
-      let usedRadius = 5000
+      // 항상 최대 반경(20km)으로 검색해서 주변 동물병원을 다 가져옴
+      // 카카오 API는 페이지당 최대 15개, 최대 3페이지(45개)까지 조회
+      const allItems: Hospital[] = []
+      const seenIds = new Set<string>()
 
-      for (const r of radii) {
-        const res = await fetch(`/api/hospitals?query=동물병원&lat=${lat}&lng=${lng}&radius=${r}`)
+      for (let page = 1; page <= 3; page++) {
+        const res = await fetch(
+          `/api/hospitals?query=동물병원&lat=${lat}&lng=${lng}&radius=20000&page=${page}`
+        )
         const data = await res.json()
-        items = data.items || []
-        usedRadius = r
-        if (items.length > 0) break
+        const items: Hospital[] = data.items || []
+        if (items.length === 0) break
+        for (const h of items) {
+          if (seenIds.has(h.id)) continue
+          seenIds.add(h.id)
+          allItems.push(h)
+        }
+        if (items.length < 15) break
       }
-      setSearchRadius(usedRadius)
-      setHospitals(items)
-      return items
+      setSearchRadius(20000)
+      setHospitals(allItems)
+      return allItems
     } finally {
       setLoading(false)
     }

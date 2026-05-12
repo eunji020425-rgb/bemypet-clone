@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const lat = searchParams.get('lat')
   const lng = searchParams.get('lng')
   const radius = searchParams.get('radius') || '20000'
+  const page = searchParams.get('page') || '1'
 
   const kakaoKey = process.env.KAKAO_REST_API_KEY?.trim()
 
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
   // 1. 카카오 Local API 우선 (위치 기반 검색)
   if (kakaoKey && lat && lng) {
     try {
-      const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&x=${lng}&y=${lat}&radius=${radius}&sort=distance&size=15`
+      const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&x=${lng}&y=${lat}&radius=${radius}&sort=distance&size=15&page=${page}`
       const res = await fetch(url, {
         headers: { Authorization: `KakaoAK ${kakaoKey}` },
         next: { revalidate: 300 },
