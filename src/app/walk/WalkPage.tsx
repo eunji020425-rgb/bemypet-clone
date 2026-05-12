@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Footprints, Navigation, Clock, Route, ChevronDown } from 'lucide-react'
+import 'leaflet/dist/leaflet.css'
 
 interface Trail {
   name: string
@@ -41,8 +42,11 @@ export default function WalkPage() {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
       }).addTo(mapInstanceRef.current)
+      setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100)
+      setTimeout(() => mapInstanceRef.current?.invalidateSize(), 500)
     } else {
       mapInstanceRef.current.setView([lat, lng], 13)
+      mapInstanceRef.current.invalidateSize()
       mapInstanceRef.current.eachLayer((layer: any) => {
         if (layer._latlng) mapInstanceRef.current.removeLayer(layer)
       })

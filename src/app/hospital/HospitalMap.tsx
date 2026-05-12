@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { MapPin, Phone, Clock, Search, Navigation } from 'lucide-react'
+import 'leaflet/dist/leaflet.css'
 
 interface Hospital {
   title: string
@@ -45,20 +46,43 @@ export default function HospitalMap() {
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
 
+  // OpenStreetMap Nominatim 역지오코딩으로 지역명 얻기
+  const getRegionName = async (lat: number, lng: number): Promise<string> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko&zoom=12`
+      )
+      const data = await res.json()
+      const a = data.address || {}
+      return a.city || a.town || a.county || a.borough || a.state || ''
+    } catch {
+      return ''
+    }
+  }
+
   const search = async (query: string, lat?: number, lng?: number) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/hospitals?query=${encodeURIComponent(query)}&display=20`)
-      const data = await res.json()
-      const items: Hospital[] = (data.items || []).filter((h: Hospital) => h.mapx && h.mapy)
+      let finalQuery = query
+      // 사용자 위치가 있고 쿼리에 지역명이 없으면 자동 추가
+      if (lat && lng && query === '동물병원') {
+        const region = await getRegionName(lat, lng)
+        if (region) finalQuery = `${region} 동물병원`
+      }
 
-      // 거리순 정렬
+      const res = await fetch(`/api/hospitals?query=${encodeURIComponent(finalQuery)}&display=20`)
+      const data = await res.json()
+      let items: Hospital[] = (data.items || []).filter((h: Hospital) => h.mapx && h.mapy)
+
+      // 거리순 정렬 + 너무 먼 결과 제거 (50km 이내)
       if (lat && lng) {
-        items.sort((a, b) => {
-          const [aLat, aLon] = katecToWgs84(parseInt(a.mapx), parseInt(a.mapy))
-          const [bLat, bLon] = katecToWgs84(parseInt(b.mapx), parseInt(b.mapy))
-          return calcDistance(lat, lng, aLat, aLon) - calcDistance(lat, lng, bLat, bLon)
-        })
+        items = items
+          .map(h => {
+            const [hLat, hLon] = katecToWgs84(parseInt(h.mapx), parseInt(h.mapy))
+            return { ...h, _dist: calcDistance(lat, lng, hLat, hLon) }
+          })
+          .filter((h: any) => h._dist < 50)
+          .sort((a: any, b: any) => a._dist - b._dist)
       }
       setHospitals(items)
       return items
@@ -80,8 +104,12 @@ export default function HospitalMap() {
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
       }).addTo(mapInstanceRef.current)
+      // 컨테이너 크기 변경 후 타일 재계산
+      setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100)
+      setTimeout(() => mapInstanceRef.current?.invalidateSize(), 500)
     } else {
       mapInstanceRef.current.setView([lat, lng], 14)
+      mapInstanceRef.current.invalidateSize()
     }
 
     // 내 위치 마커
