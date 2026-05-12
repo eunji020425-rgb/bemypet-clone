@@ -33,6 +33,7 @@ interface Place {
   rules?: string[]
   summary?: string
   enriching?: boolean
+  discoveredVia?: 'ai'
 }
 
 const COLORS: Record<Category, { pin: string; badge: string; emoji: string; label: string }> = {
@@ -155,11 +156,54 @@ export default function PetPlacesMap() {
       const data = await res.json()
       const items: Place[] = (data.places || []).map((p: Place) => ({ ...p, enriching: true }))
       setPlaces(items)
-      // 백그라운드에서 Gemini 정보 보강
+      // 1단계: 1차 결과 즉시 enrichment 시작 (백그라운드)
       enrichWithGemini(items)
+      // 2단계: Gemini가 알고있는 유명 장소 추가 검색 (백그라운드)
+      if (!rect && lat && lng) {
+        discoverMore(lat, lng, items.map(p => p.id))
+      }
       return items
     } finally {
       setLoading(false)
+    }
+  }
+
+  const discoverMore = async (lat: number, lng: number, existingIds: string[]) => {
+    try {
+      const res = await fetch('/api/pet-places/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng, existingIds }),
+      })
+      const data = await res.json()
+      const additional: Place[] = (data.places || []).map((p: any) => ({ ...p, enriching: true }))
+      if (additional.length === 0) return
+
+      setPlaces(prev => {
+        // 중복 제거 (id + 정규화된 이름)
+        const existing = new Set(prev.map(p => p.id))
+        const seenNames = new Set(prev.map(p => p.name.replace(/\s+/g, '').toLowerCase()))
+        const newOnes = additional.filter(p => {
+          if (existing.has(p.id)) return false
+          const key = p.name.replace(/\s+/g, '').toLowerCase()
+          if (seenNames.has(key)) return false
+          seenNames.add(key)
+          return true
+        })
+        if (newOnes.length === 0) return prev
+        const merged = [...prev, ...newOnes].sort(
+          (a, b) => (a.distance ?? 999) - (b.distance ?? 999)
+        )
+        // 새 장소들 백그라운드 enrichment
+        enrichWithGemini(newOnes)
+        // 새 마커 추가 (지도가 초기화 됐을 때만)
+        if (mapInstanceRef.current && lastSearchCenterRef.current) {
+          renderMarkers(merged, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1])
+        }
+        return merged
+      })
+    } catch (e) {
+      console.error('discover error', e)
     }
   }
 
@@ -437,6 +481,11 @@ export default function PetPlacesMap() {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${info.badge}`}>
                         {info.label}
                       </span>
+                      {p.discoveredVia === 'ai' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-pink-50 text-pink-700 border-pink-200">
+                          ✨ AI 추천
+                        </span>
+                      )}
                       {p.hasOutdoorPlayground && p.category !== 'playground' && (
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-green-50 text-green-700 border-green-200">
                           🌳 야외 운동장
