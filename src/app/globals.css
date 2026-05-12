@@ -43,12 +43,16 @@
   --color-cream: var(--cream);
 }
 
+html {
+  font-size: 18px;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'KOTRAHOPE', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   letter-spacing: -0.2px;
-  line-height: 1.55;
+  line-height: 1.6;
   background-image:
     radial-gradient(ellipse at 20% 20%, rgba(212,232,176,0.35) 0, transparent 45%),
     radial-gradient(ellipse at 80% 60%, rgba(184,217,144,0.28) 0, transparent 50%),
