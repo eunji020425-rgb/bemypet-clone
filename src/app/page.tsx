@@ -130,7 +130,7 @@ export default function HomePage() {
               <h3 className="text-xl text-[#2a3a55] tracking-[-0.5px] font-bold">
                 우리만의 산책 코스 찾기
               </h3>
-              <p className="text-xs text-[#2a3a55]/70 mt-1">근처 산책로 · 도그카페 · 동물병원</p>
+              <p className="text-xs text-[#2a3a55]/70 mt-1">근처 산책로 · 반려동물 동반 장소 · 동물병원</p>
             </div>
             <Footprints size={32} className="text-[#3a7ab8]" />
           </div>
