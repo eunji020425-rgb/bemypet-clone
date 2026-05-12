@@ -1,38 +1,28 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Cafe24Ssurround';
-  src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Ssurround/Cafe24Ssurround.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
-  /* Lucky Cat Cake Shop Palette - 크림+비비드그린 */
-  --background: #fdf9c4;       /* 크림 옐로우 */
-  --background-2: #fefce8;     /* 더 밝은 크림 */
-  --foreground: #1f5a1f;       /* 진한 그린 텍스트 */
-  --ink-soft: #5a8a4a;
+  /* Soft Green Glow Palette */
+  --background: #fdfaf0;
+  --foreground: #2d3a22;
+  --ink-soft: #6b7560;
 
-  /* 비비드 그린 */
-  --green-1: #e8f5d0;
-  --green-2: #c5e89c;
-  --green-3: #95cc5c;
-  --green-vivid: #6fb83f;     /* 메인 비비드 그린 */
-  --green-deep: #2d6b2d;      /* 라인/타이포용 진그린 */
-  --green-line: #4a9a3a;      /* 도형 외곽선 */
+  /* 메인 그린 톤 */
+  --green-1: #e8f3d0;
+  --green-2: #d4e8b0;
+  --green-3: #b8d990;
+  --green-4: #94c068;
+  --green-deep: #5a7a3a;
 
-  /* 액센트 */
-  --cream: #fdf9c4;
-  --warm: #fef3a8;
+  /* 따뜻한 액센트 */
+  --cream: #fdfaf0;
+  --warm: #f5ead4;
 
-  /* 호환 변수 */
-  --yellow: #6fb83f;
-  --yellow-dark: #2d6b2d;
+  /* 기존 yellow 호환 (점진적 마이그레이션용) */
+  --yellow: #94c068;
+  --yellow-dark: #5a7a3a;
 
-  --border: #c5e89c;
-  --text-sub: #5a8a4a;
+  --border: #e8e3d0;
+  --text-sub: #6b7560;
 }
 
 @theme inline {
@@ -45,109 +35,28 @@
   --color-cream: var(--cream);
 }
 
-html {
-  font-size: 20px;
-  font-family: 'Cafe24Ssurround', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.text-xs { font-size: 0.85rem !important; }
-.text-sm { font-size: 0.95rem !important; }
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Cafe24Ssurround', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   letter-spacing: -0.2px;
-  line-height: 1.6;
-  min-height: 100vh;
-  position: relative;
-  /* 도들 배경 - 클로버/스파클/스퀴글 SVG 패턴 */
+  line-height: 1.5;
   background-image:
-    /* 클로버 좌상 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><g fill='none' stroke='%234a9a3a' stroke-width='2' stroke-linecap='round'><path d='M30 18c-3-5-10-3-10 2s5 6 10 4'/><path d='M30 22c3-5 10-3 10 2s-5 6-10 4'/><path d='M30 22c-5 3-3 10 2 10s6-5 4-10'/><path d='M30 22c5 3 3 10-2 10s-6-5-4-10'/><path d='M30 32v10'/></g></svg>"),
-    /* 스파클/별 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%234a9a3a' stroke-width='1.5' stroke-linecap='round'><path d='M20 8v8M20 24v8M8 20h8M24 20h8'/></g></svg>"),
-    /* 스퀴글 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='40' viewBox='0 0 120 40'><path fill='none' stroke='%234a9a3a' stroke-width='2' stroke-linecap='round' d='M5 20 Q 20 5 35 20 T 65 20 T 95 20 T 115 20'/></svg>");
-  background-position:
-    8% 12%,
-    85% 18%,
-    20% 75%;
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-size: 60px 60px, 40px 40px, 120px 40px;
+    radial-gradient(ellipse at 20% 20%, rgba(212,232,176,0.35) 0, transparent 45%),
+    radial-gradient(ellipse at 80% 60%, rgba(184,217,144,0.28) 0, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(232,243,208,0.45) 0, transparent 45%);
   background-attachment: fixed;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background-image:
-    /* 추가 클로버 우하 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 60 60'><g fill='none' stroke='%234a9a3a' stroke-width='2' stroke-linecap='round'><path d='M30 18c-3-5-10-3-10 2s5 6 10 4'/><path d='M30 22c3-5 10-3 10 2s-5 6-10 4'/><path d='M30 22c-5 3-3 10 2 10s6-5 4-10'/><path d='M30 22c5 3 3 10-2 10s-6-5-4-10'/><path d='M30 32v10'/></g></svg>"),
-    /* 스파클 우상 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 40 40'><g fill='none' stroke='%234a9a3a' stroke-width='1.5' stroke-linecap='round'><path d='M20 8v8M20 24v8M8 20h8M24 20h8'/></g></svg>"),
-    /* 큰 스퀴글 우 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='50' viewBox='0 0 120 40'><path fill='none' stroke='%234a9a3a' stroke-width='2' stroke-linecap='round' d='M5 20 Q 20 5 35 20 T 65 20 T 95 20 T 115 20'/></svg>");
-  background-position:
-    88% 80%,
-    10% 40%,
-    70% 50%;
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-size: 70px 70px, 30px 30px, 150px 50px;
-  opacity: 0.7;
-}
-
-main, header, footer {
-  position: relative;
-  z-index: 1;
+  min-height: 100vh;
 }
 
 .serif {
-  font-family: 'Cafe24Ssurround', 'Pretendard', sans-serif;
+  font-family: 'DM Serif Display', serif;
   font-weight: 400;
-}
-
-*, *::before, *::after {
-  font-family: 'Cafe24Ssurround', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 2px solid var(--green-vivid);
-}
-
-/* 럭키캣 스타일 카드 - 흰 배경 + 비비드 그린 외곽선 */
-.lucky-card {
-  background: #ffffff;
-  border: 2px solid var(--green-vivid);
-  border-radius: 18px;
-}
-
-/* 아웃라인 헤드라인 (외곽만 그리는 효과) */
-.outline-headline {
-  color: transparent;
-  -webkit-text-stroke: 2px var(--green-deep);
-  text-stroke: 2px var(--green-deep);
-  font-weight: 400;
-}
-
-/* 비비드 그린 칠 텍스트 */
-.fill-green {
-  color: var(--green-vivid);
-}
-
-/* 둥근 태그 칩 */
-.lucky-chip {
-  background: #ffffff;
-  border: 2px solid var(--green-vivid);
-  color: var(--green-deep);
-  border-radius: 999px;
-  padding: 4px 14px;
-  font-size: 0.85rem;
-  display: inline-block;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
