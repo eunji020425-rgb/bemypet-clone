@@ -32,6 +32,15 @@ interface Item {
   rules?: string[]
   summary?: string
   enriching?: boolean
+  // 산책로 전용 보강 필드
+  difficulty?: string
+  trailPopularity?: string
+  trailLength?: string
+  description?: string
+  tip?: string
+  features?: string[]
+  dogFriendly?: string
+  accessible?: string
 }
 
 const PET_PLACE_CATEGORIES: Category[] = ['restaurant', 'cafe', 'playground']
@@ -130,20 +139,104 @@ export default function AllMap() {
       }
 
       combined.sort((a, b) => (a.distance ?? 999) - (b.distance ?? 999))
-      // 펫 장소(식당/카페/운동장)는 enriching 표시
-      const withEnrich = combined.map(it =>
-        PET_PLACE_CATEGORIES.includes(it.category) ? { ...it, enriching: true } : it
-      )
+      // 펫 장소/산책로 enriching 표시
+      const withEnrich = combined.map(it => {
+        if (PET_PLACE_CATEGORIES.includes(it.category) || it.category === 'walk') {
+          return { ...it, enriching: true }
+        }
+        return it
+      })
       setItems(withEnrich)
       // 백그라운드 enrichment 시작
       const petPlaceItems = withEnrich.filter(it => PET_PLACE_CATEGORIES.includes(it.category))
-      if (petPlaceItems.length > 0) {
-        enrichWithGemini(petPlaceItems)
-      }
+      const walkItems = withEnrich.filter(it => it.category === 'walk')
+      if (petPlaceItems.length > 0) enrichWithGemini(petPlaceItems)
+      if (walkItems.length > 0) enrichWalksWithGemini(walkItems)
       return withEnrich
     } finally {
       setLoading(false)
     }
+  }
+
+  const enrichWalksWithGemini = async (toEnrich: Item[]) => {
+    if (toEnrich.length === 0) return
+    const BATCH = 6
+    const batches: Item[][] = []
+    for (let i = 0; i < toEnrich.length; i += BATCH) {
+      batches.push(toEnrich.slice(i, i + BATCH))
+    }
+    await Promise.all(
+      batches.map(async batch => {
+        try {
+          const parks = batch.map(it => ({
+            id: it.id, // "walk-xxx" 형태 그대로 사용 (캐시 키)
+            name: it.name,
+            address: it.address,
+          }))
+          const res = await fetch('/api/gemini/walk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parks, petType: '강아지' }),
+          })
+          const data = await res.json()
+          const enrichments = data.enrichments || []
+          applyWalkEnrichment(batch, enrichments)
+        } catch {}
+      })
+    )
+  }
+
+  const applyWalkEnrichment = (batch: Item[], enrichments: any[]) => {
+    const byId = new Map<string, any>()
+    batch.forEach((p, i) => {
+      if (enrichments[i]) byId.set(p.id, enrichments[i])
+    })
+    setItems(prev => {
+      const updated = prev.map(it => {
+        const e = byId.get(it.id)
+        if (!e) return it
+        return {
+          ...it,
+          difficulty: e.difficulty,
+          trailPopularity: e.popularity,
+          trailLength: e.length,
+          description: e.description,
+          tip: e.tip,
+          features: Array.isArray(e.features) ? e.features : [],
+          dogFriendly: e.dogFriendly,
+          accessible: e.accessible,
+          enriching: false,
+        }
+      })
+      // 강아지 동반 불가 또는 접근 불편한 산책로 제거
+      const filtered = updated.filter(it => {
+        if (it.category !== 'walk') return true
+        if (it.dogFriendly === '불가') return false
+        if (it.accessible === '불편') return false
+        return true
+      })
+      if (mapInstanceRef.current && lastSearchCenterRef.current) {
+        renderMarkers(lastSearchCenterRef.current[0], lastSearchCenterRef.current[1], filtered, true)
+      }
+      return filtered
+    })
+    setSelected(prev => {
+      if (!prev) return prev
+      const e = byId.get(prev.id)
+      if (!e) return prev
+      if (e.dogFriendly === '불가' || e.accessible === '불편') return null
+      return {
+        ...prev,
+        difficulty: e.difficulty,
+        trailPopularity: e.popularity,
+        trailLength: e.length,
+        description: e.description,
+        tip: e.tip,
+        features: Array.isArray(e.features) ? e.features : [],
+        dogFriendly: e.dogFriendly,
+        accessible: e.accessible,
+      }
+    })
   }
 
   const enrichWithGemini = async (toEnrich: Item[]) => {
@@ -533,6 +626,32 @@ export default function AllMap() {
                       {it.category === 'playground' && it.grassType && it.grassType !== '해당없음' && (
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-green-50 text-green-700 border-green-200">
                           🌱 {it.grassType}
+                        </span>
+                      )}
+                      {/* 산책로 배지: 혼잡도/길이 */}
+                      {it.category === 'walk' && it.trailPopularity && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-blue-50 text-blue-700 border-blue-200">
+                          👥 {it.trailPopularity}
+                        </span>
+                      )}
+                      {it.category === 'walk' && it.trailLength && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-amber-50 text-amber-700 border-amber-200">
+                          📏 {it.trailLength}
+                        </span>
+                      )}
+                      {it.category === 'walk' && it.difficulty && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-gray-50 text-gray-700 border-gray-200">
+                          {it.difficulty}
+                        </span>
+                      )}
+                      {it.category === 'walk' && it.accessible === '양호' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-green-50 text-green-700 border-green-200">
+                          ♿ 접근성 좋음
+                        </span>
+                      )}
+                      {it.category === 'walk' && it.dogFriendly === '조건부' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-yellow-50 text-yellow-700 border-yellow-200">
+                          🐕 조건부 동반
                         </span>
                       )}
                     </div>
