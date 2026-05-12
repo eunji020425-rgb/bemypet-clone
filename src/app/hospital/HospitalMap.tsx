@@ -98,12 +98,14 @@ export default function HospitalMap() {
       mapInstanceRef.current.invalidateSize()
     }
 
-    // 내 위치 마커
+    // 내 위치 마커는 항상 실제 GPS 좌표(userPos) 사용
+    const myLat = userPos?.[0] ?? lat
+    const myLng = userPos?.[1] ?? lng
     const myIcon = L.divIcon({
       html: `<div style="background:#3b82f6;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(59,130,246,0.2)"></div>`,
       className: '', iconAnchor: [9, 9],
     })
-    const myMarker = L.marker([lat, lng], { icon: myIcon })
+    const myMarker = L.marker([myLat, myLng], { icon: myIcon })
       .addTo(mapInstanceRef.current)
       .bindPopup('📍 현재 위치')
     markersRef.current.push(myMarker)
@@ -125,7 +127,7 @@ export default function HospitalMap() {
       markersRef.current.push(marker)
     })
 
-    // 자동 줌
+    // 자동 줌: 검색 중심 + 병원들만 포함 (드래그 검색 시 GPS 위치까지 강제로 포함하지 않음)
     if (items.length > 0) {
       const bounds = L.latLngBounds([[lat, lng], ...items.map(h => [h.lat, h.lng] as [number, number])])
       mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
