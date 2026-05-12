@@ -398,7 +398,7 @@ export default function WalkPage() {
               )}
               <div className="flex gap-3 mt-3">
                 <a
-                  href={`/walk/route?name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
+                  href={`/route?from=walk&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
                   className="bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
                 >
                   <Navigation size={13} />앱에서 길찾기

@@ -279,24 +279,23 @@ export default function HospitalMap() {
               <h3 className="font-bold text-[#2d2d2d]">🐾 {selected.name}</h3>
               {selected.category && <p className="text-xs text-[#aaa] mt-0.5">{selected.category}</p>}
               {selected.address && <p className="text-sm text-[#666] mt-1">{selected.address}</p>}
-              <div className="flex flex-wrap gap-3 mt-2">
+              <div className="flex flex-wrap gap-3 mt-3 items-center">
+                <a
+                  href={`/route?from=hospital&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
+                  className="bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
+                >
+                  <Navigation size={13} />앱에서 길찾기
+                </a>
                 {selected.phone && (
                   <a href={`tel:${selected.phone}`} className="text-sm text-[#f5c518] font-bold flex items-center gap-1">
                     <Phone size={13} />{selected.phone}
                   </a>
                 )}
                 {selected.link && (
-                  <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-blue-500 font-bold flex items-center gap-1">
-                    <ExternalLink size={13} />카카오맵
+                  <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-[#888] hover:text-blue-500 font-medium flex items-center gap-1">
+                    <ExternalLink size={13} />카카오맵에서 보기
                   </a>
                 )}
-                <a
-                  href={`https://map.kakao.com/link/to/${encodeURIComponent(selected.name)},${selected.lat},${selected.lng}`}
-                  target="_blank" rel="noopener"
-                  className="text-sm text-green-600 font-bold flex items-center gap-1"
-                >
-                  <Navigation size={13} />길찾기
-                </a>
               </div>
             </div>
             <button onClick={() => setSelected(null)} className="text-[#aaa] hover:text-[#444] text-lg font-bold">✕</button>
