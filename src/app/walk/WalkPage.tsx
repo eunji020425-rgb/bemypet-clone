@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Navigation, Clock, Route, ExternalLink } from 'lucide-react'
+import { Navigation, ExternalLink } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 
 interface Trail {
@@ -13,10 +13,11 @@ interface Trail {
   lng: number
   distance: number
   link?: string
-  difficulty: string
-  description: string
-  tip: string
-  features: string[]
+  difficulty?: string
+  description?: string
+  tip?: string
+  features?: string[]
+  enriching?: boolean
 }
 
 const DIFF_COLOR: Record<string, string> = {
@@ -40,7 +41,7 @@ export default function WalkPage() {
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
-  const [petType, setPetType] = useState('강아지')
+  const [enriching, setEnriching] = useState(false)
   const [userPos, setUserPos] = useState<[number, number] | null>(null)
   const [selected, setSelected] = useState<Trail | null>(null)
   const [error, setError] = useState('')
@@ -63,7 +64,6 @@ export default function WalkPage() {
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100)
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 500)
 
-      // 지도 이동 감지
       mapInstanceRef.current.on('moveend', () => {
         const center = mapInstanceRef.current.getCenter()
         const last = lastSearchCenterRef.current
@@ -76,7 +76,6 @@ export default function WalkPage() {
       mapInstanceRef.current.invalidateSize()
     }
 
-    // 내 위치 마커 (실제 GPS 좌표)
     const myLat = userPos?.[0] ?? lat
     const myLng = userPos?.[1] ?? lng
     const myIcon = L.divIcon({
@@ -88,7 +87,6 @@ export default function WalkPage() {
       .bindPopup('📍 현재 위치')
     markersRef.current.push(myMarker)
 
-    // 산책로 핀 (초록색 발자국)
     items.forEach((t, i) => {
       if (!t.lat || !t.lng) return
       const icon = L.divIcon({
@@ -106,10 +104,47 @@ export default function WalkPage() {
       markersRef.current.push(marker)
     })
 
-    // 자동 줌
     if (items.length > 0) {
       const bounds = L.latLngBounds([[lat, lng], ...items.map(t => [t.lat, t.lng] as [number, number])])
       mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+    }
+  }
+
+  const enrichWithGemini = async (parks: Trail[]) => {
+    setEnriching(true)
+    try {
+      const res = await fetch('/api/gemini/walk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parks, petType: '강아지' }),
+      })
+      const data = await res.json()
+      const enrichments = data.enrichments || []
+      setTrails(prev =>
+        prev.map((t, i) => ({
+          ...t,
+          difficulty: enrichments[i]?.difficulty,
+          description: enrichments[i]?.description,
+          tip: enrichments[i]?.tip,
+          features: Array.isArray(enrichments[i]?.features) ? enrichments[i].features : undefined,
+          enriching: false,
+        }))
+      )
+      // 선택된 항목도 업데이트
+      setSelected(prev => {
+        if (!prev) return prev
+        const idx = parks.findIndex(p => p.id === prev.id)
+        if (idx === -1) return prev
+        return {
+          ...prev,
+          difficulty: enrichments[idx]?.difficulty,
+          description: enrichments[idx]?.description,
+          tip: enrichments[idx]?.tip,
+          features: Array.isArray(enrichments[idx]?.features) ? enrichments[idx].features : undefined,
+        }
+      })
+    } finally {
+      setEnriching(false)
     }
   }
 
@@ -119,24 +154,25 @@ export default function WalkPage() {
     lastSearchCenterRef.current = [lat, lng]
     setShowResearchBtn(false)
     try {
-      const res = await fetch('/api/gemini/walk', {
+      // 1단계: 카카오에서 공원 즉시 가져오기 (빠름)
+      const res = await fetch('/api/walks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat, lng, petType }),
+        body: JSON.stringify({ lat, lng }),
       })
       const data = await res.json()
-      if (data.error && !data.trails) {
-        setError(data.error)
-        setTrails([])
-        return
+      const parks: Trail[] = (data.parks || []).map((p: Trail) => ({ ...p, enriching: true }))
+      setTrails(parks)
+      await initMap(lat, lng, parks)
+      setLoading(false)
+
+      // 2단계: 백그라운드에서 Gemini로 정보 채우기
+      if (parks.length > 0) {
+        enrichWithGemini(parks)
       }
-      const items = data.trails || []
-      setTrails(items)
-      await initMap(lat, lng, items)
     } catch (e: any) {
       setError('산책로 추천을 가져오지 못했습니다. 다시 시도해주세요.')
       setTrails([])
-    } finally {
       setLoading(false)
     }
   }
@@ -186,32 +222,26 @@ export default function WalkPage() {
     <div className="flex flex-col gap-4">
       {/* 컨트롤 */}
       <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={petType}
-          onChange={e => setPetType(e.target.value)}
-          className="border border-[#ececec] rounded-full px-4 py-2 text-sm outline-none focus:border-[#f5c518] bg-white"
-        >
-          <option>강아지</option>
-          <option>고양이</option>
-          <option>소형견</option>
-          <option>대형견</option>
-          <option>노령견</option>
-        </select>
         <button
           onClick={locate}
           disabled={loading}
           className="flex items-center gap-2 bg-[#f5c518] hover:bg-[#e0b010] text-white px-5 py-2 rounded-full text-sm font-bold transition disabled:opacity-60"
         >
           <Navigation size={15} />
-          {loading ? '추천 중...' : '내 위치로 추천받기'}
+          {loading ? '검색 중...' : '내 위치로 추천받기'}
         </button>
+        {enriching && (
+          <span className="text-xs text-[#888] flex items-center gap-1">
+            <span className="inline-block w-3 h-3 border-2 border-[#22c55e] border-t-transparent rounded-full animate-spin" />
+            AI가 산책 정보를 분석 중...
+          </span>
+        )}
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2 text-xs text-red-700">{error}</div>
       )}
 
-      {/* 위치 상태 */}
       {locStatus === 'locating' && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 text-xs text-blue-700">
           📍 현재 위치를 확인하는 중...
@@ -232,7 +262,6 @@ export default function WalkPage() {
       )}
 
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* 지도 */}
         <div className="lg:w-3/5 relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
           {showResearchBtn && (
@@ -250,13 +279,12 @@ export default function WalkPage() {
           )}
         </div>
 
-        {/* 산책로 목록 */}
         <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '550px' }}>
           <p className="text-xs text-[#aaa] px-1 pb-1">총 {trails.length}개의 산책로 추천</p>
           {loading && trails.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">
               <div className="text-3xl mb-2 animate-bounce">🐾</div>
-              AI가 산책로를 추천하고 있어요...
+              산책로를 검색 중...
             </div>
           )}
           {!loading && trails.length === 0 && !error && (
@@ -284,13 +312,18 @@ export default function WalkPage() {
                       </span>
                     </div>
                     <p className="text-xs text-[#888] truncate mt-0.5">{t.address}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[t.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
-                        {t.difficulty}
-                      </span>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {t.difficulty && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[t.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+                          {t.difficulty}
+                        </span>
+                      )}
                       {t.features?.slice(0, 2).map((f, j) => (
                         <span key={j} className="text-xs bg-[#f5f5f5] px-2 py-0.5 rounded-full text-[#666]">{f}</span>
                       ))}
+                      {t.enriching && !t.difficulty && (
+                        <span className="text-xs text-[#aaa] italic">AI 분석 중...</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -300,25 +333,29 @@ export default function WalkPage() {
         </div>
       </div>
 
-      {/* 선택된 산책로 상세 */}
       {selected && (
         <div className="bg-[#f0fdf4] border border-green-300 rounded-2xl p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h3 className="font-bold text-[#2d2d2d]">🐾 {selected.name}</h3>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[selected.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
-                  {selected.difficulty}
-                </span>
+                {selected.difficulty && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[selected.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+                    {selected.difficulty}
+                  </span>
+                )}
               </div>
               {selected.address && <p className="text-xs text-[#666] mt-1">{selected.address}</p>}
               {selected.description && <p className="text-sm text-[#444] mt-2 leading-relaxed">{selected.description}</p>}
+              {!selected.description && selected.enriching && (
+                <p className="text-sm text-[#aaa] italic mt-2">AI가 산책 정보를 분석 중입니다...</p>
+              )}
               {selected.tip && (
                 <div className="mt-3 bg-white rounded-lg px-3 py-2 text-xs text-[#7a6000] border border-yellow-200">
                   💡 <strong>산책 팁:</strong> {selected.tip}
                 </div>
               )}
-              {selected.features?.length > 0 && (
+              {selected.features && selected.features.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {selected.features.map((f, j) => (
                     <span key={j} className="text-xs bg-white px-2 py-0.5 rounded-full text-[#666] border border-[#ececec]">{f}</span>
