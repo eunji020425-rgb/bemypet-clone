@@ -30,6 +30,8 @@ export async function POST(request: Request) {
 [
   {
     "difficulty": "쉬움|보통|어려움",
+    "popularity": "한산|보통|붐빔|매우 붐빔",
+    "length": "산책 가능한 총 거리 (예: 약 2.5km, 약 1km)",
     "description": "특징과 환경 (2문장)",
     "tip": "산책 팁 (1문장)",
     "features": ["특징1","특징2","특징3"]

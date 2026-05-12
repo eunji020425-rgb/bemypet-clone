@@ -14,10 +14,19 @@ interface Trail {
   distance: number
   link?: string
   difficulty?: string
+  popularity?: string
+  length?: string
   description?: string
   tip?: string
   features?: string[]
   enriching?: boolean
+}
+
+const POP_COLOR: Record<string, string> = {
+  '한산': 'text-blue-600 bg-blue-50 border-blue-200',
+  '보통': 'text-green-600 bg-green-50 border-green-200',
+  '붐빔': 'text-orange-600 bg-orange-50 border-orange-200',
+  '매우 붐빔': 'text-red-600 bg-red-50 border-red-200',
 }
 
 const DIFF_COLOR: Record<string, string> = {
@@ -124,13 +133,14 @@ export default function WalkPage() {
         prev.map((t, i) => ({
           ...t,
           difficulty: enrichments[i]?.difficulty,
+          popularity: enrichments[i]?.popularity,
+          length: enrichments[i]?.length,
           description: enrichments[i]?.description,
           tip: enrichments[i]?.tip,
           features: Array.isArray(enrichments[i]?.features) ? enrichments[i].features : undefined,
           enriching: false,
         }))
       )
-      // 선택된 항목도 업데이트
       setSelected(prev => {
         if (!prev) return prev
         const idx = parks.findIndex(p => p.id === prev.id)
@@ -138,6 +148,8 @@ export default function WalkPage() {
         return {
           ...prev,
           difficulty: enrichments[idx]?.difficulty,
+          popularity: enrichments[idx]?.popularity,
+          length: enrichments[idx]?.length,
           description: enrichments[idx]?.description,
           tip: enrichments[idx]?.tip,
           features: Array.isArray(enrichments[idx]?.features) ? enrichments[idx].features : undefined,
@@ -323,9 +335,16 @@ export default function WalkPage() {
                           {t.difficulty}
                         </span>
                       )}
-                      {t.features?.slice(0, 2).map((f, j) => (
-                        <span key={j} className="text-xs bg-[#f5f5f5] px-2 py-0.5 rounded-full text-[#666]">{f}</span>
-                      ))}
+                      {t.popularity && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${POP_COLOR[t.popularity] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+                          👥 {t.popularity}
+                        </span>
+                      )}
+                      {t.length && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a] font-medium">
+                          📏 {t.length}
+                        </span>
+                      )}
                       {t.enriching && !t.difficulty && (
                         <span className="text-xs text-[#aaa] italic">AI 분석 중...</span>
                       )}
@@ -349,6 +368,16 @@ export default function WalkPage() {
                     {selected.difficulty}
                   </span>
                 )}
+                {selected.popularity && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${POP_COLOR[selected.popularity] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
+                    👥 {selected.popularity}
+                  </span>
+                )}
+                {selected.length && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#fef3c7] text-[#92400e] border border-[#fde68a] font-medium">
+                    📏 {selected.length}
+                  </span>
+                )}
               </div>
               {selected.address && <p className="text-xs text-[#666] mt-1">{selected.address}</p>}
               {selected.description && <p className="text-sm text-[#444] mt-2 leading-relaxed">{selected.description}</p>}
@@ -368,18 +397,17 @@ export default function WalkPage() {
                 </div>
               )}
               <div className="flex gap-3 mt-3">
+                <a
+                  href={`/walk/route?name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
+                  className="bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
+                >
+                  <Navigation size={13} />앱에서 길찾기
+                </a>
                 {selected.link && (
-                  <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-blue-500 font-bold flex items-center gap-1">
-                    <ExternalLink size={13} />카카오맵
+                  <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-[#888] hover:text-blue-500 font-medium flex items-center gap-1">
+                    <ExternalLink size={13} />카카오맵에서 보기
                   </a>
                 )}
-                <a
-                  href={`https://map.kakao.com/link/to/${encodeURIComponent(selected.name)},${selected.lat},${selected.lng}`}
-                  target="_blank" rel="noopener"
-                  className="text-sm text-green-600 font-bold flex items-center gap-1"
-                >
-                  <Navigation size={13} />길찾기
-                </a>
               </div>
             </div>
             <button onClick={() => setSelected(null)} className="text-[#aaa] hover:text-[#444] text-lg font-bold">✕</button>
