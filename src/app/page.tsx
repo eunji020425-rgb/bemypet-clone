@@ -6,7 +6,7 @@ export default function HomePage() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* 히어로 섹션 */}
       <section className="text-center py-12">
-        <p className="text-xs text-[#3a7ab8] font-semibold tracking-[3px]">— 환영합니다 —</p>
+        <p className="text-xs text-[#3a7ab8] font-semibold tracking-[3px] uppercase">— welcome —</p>
         <h1 className="mt-4 text-[#2a3a55] leading-[1.15] tracking-[-1.5px]" style={{ fontSize: 'clamp(34px, 5.5vw, 52px)', fontWeight: 700 }}>
           너와 나를 위한<br/>
           <span className="text-[#3a7ab8]">평온한 공간</span>
