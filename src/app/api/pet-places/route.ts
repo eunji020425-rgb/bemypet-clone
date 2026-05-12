@@ -14,6 +14,8 @@ interface Place {
   rawCategory?: string
 }
 
+const CLOSED_KEYWORDS = ['폐업', '폐점', '휴업', '이전', '종료', '임시휴업', '리뉴얼중', '공사중']
+
 const CATEGORY_QUERIES: Record<string, { label: string; queries: string[] }> = {
   restaurant: {
     label: '식당',
@@ -82,6 +84,10 @@ export async function GET(request: Request) {
         for (const d of docs) {
           if (seen.has(d.id)) continue
           seen.add(d.id)
+          const name = d.place_name || ''
+          // 폐업/이전 키워드 또는 카카오맵 URL 없는 경우 제외
+          if (CLOSED_KEYWORDS.some(kw => name.includes(kw))) continue
+          if (!d.place_url) continue
           const placeLat = parseFloat(d.y)
           const placeLng = parseFloat(d.x)
           if (!placeLat || !placeLng) continue
