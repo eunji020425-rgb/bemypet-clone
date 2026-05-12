@@ -16,6 +16,14 @@ interface Hospital {
   category?: string
 }
 
+function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 export default function HospitalMap() {
   const mapRef = useRef<HTMLDivElement>(null)
   const [hospitals, setHospitals] = useState<Hospital[]>([])
@@ -25,11 +33,15 @@ export default function HospitalMap() {
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
   const [locError, setLocError] = useState('')
   const [searchRadius, setSearchRadius] = useState(5000)
+  const [showResearchBtn, setShowResearchBtn] = useState(false)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
+  const lastSearchCenterRef = useRef<[number, number] | null>(null)
 
   const fetchHospitals = async (lat: number, lng: number) => {
     setLoading(true)
+    lastSearchCenterRef.current = [lat, lng]
+    setShowResearchBtn(false)
     try {
       // 항상 최대 반경(20km)으로 검색해서 주변 동물병원을 다 가져옴
       // 카카오 API는 페이지당 최대 15개, 최대 3페이지(45개)까지 조회
@@ -72,6 +84,15 @@ export default function HospitalMap() {
       }).addTo(mapInstanceRef.current)
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 100)
       setTimeout(() => mapInstanceRef.current?.invalidateSize(), 500)
+
+      // 지도 이동 감지: 마지막 검색 위치에서 1km 이상 멀어지면 재검색 버튼 표시
+      mapInstanceRef.current.on('moveend', () => {
+        const center = mapInstanceRef.current.getCenter()
+        const last = lastSearchCenterRef.current
+        if (!last) return
+        const dist = calcDistance(last[0], last[1], center.lat, center.lng)
+        setShowResearchBtn(dist > 1)
+      })
     } else {
       mapInstanceRef.current.setView([lat, lng], 14)
       mapInstanceRef.current.invalidateSize()
@@ -178,8 +199,21 @@ export default function HospitalMap() {
 
       <div className="flex flex-col lg:flex-row gap-4">
         {/* 지도 */}
-        <div className="lg:w-3/5">
+        <div className="lg:w-3/5 relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#ececec]" style={{ height: '550px' }} />
+          {showResearchBtn && (
+            <button
+              onClick={() => {
+                const c = mapInstanceRef.current.getCenter()
+                fetchHospitals(c.lat, c.lng).then(items => initMap(c.lat, c.lng, items))
+              }}
+              disabled={loading}
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-[#f5c518] hover:bg-[#e0b010] text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 disabled:opacity-70"
+            >
+              <Navigation size={14} />
+              이 지역에서 다시 검색
+            </button>
+          )}
         </div>
 
         {/* 병원 목록 */}
