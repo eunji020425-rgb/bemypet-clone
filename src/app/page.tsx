@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { MessageCircle, Users, Map as MapIcon, Stethoscope, Footprints, Search } from 'lucide-react'
+import { Users, Map as MapIcon, Stethoscope, Footprints, Search } from 'lucide-react'
+import BichonMascot from '@/components/BichonMascot'
 
 export default function HomePage() {
   return (
@@ -9,6 +10,11 @@ export default function HomePage() {
       <section className="text-center pt-6 pb-10 relative">
         <p className="text-[#2d6b2d] tracking-[6px] text-sm">— WELCOME —</p>
         <p className="mt-3 text-[#5a8a4a] text-xs tracking-[2px]">(C) PET TOGETHER · 반려동물과 함께</p>
+
+        {/* 비숑 마스코트 */}
+        <div className="flex justify-center mt-4">
+          <BichonMascot size={140} />
+        </div>
 
         <h1 className="mt-4 text-[#2d6b2d] leading-[1.05]" style={{ fontSize: 'clamp(44px, 8vw, 78px)', textShadow: '3px 3px 0 #fef3a8' }}>
           멍냥이랑<span className="inline-block align-middle mx-2">🍀</span>
@@ -132,7 +138,10 @@ export default function HomePage() {
             <h3 className="text-2xl text-[#2d6b2d]">find your <span className="fill-green">spot</span></h3>
             <p className="text-sm text-[#5a8a4a] mt-1">근처 산책로 · 도그카페 · 동물병원</p>
           </div>
-          <Footprints size={48} className="text-[#6fb83f]" />
+          <div className="flex items-center gap-3">
+            <BichonMascot size={80} />
+            <Footprints size={36} className="text-[#6fb83f]" />
+          </div>
         </Link>
       </section>
     </div>

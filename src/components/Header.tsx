@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints, PawPrint, Map as MapIcon, Shield } from 'lucide-react'
+import BichonMascot from '@/components/BichonMascot'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -46,8 +47,9 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-[#fdf9c4]/90 backdrop-blur border-b-2 border-[#6fb83f]">
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
         {/* 로고 */}
-        <Link href="/" className="text-2xl tracking-tight">
-          <span className="text-[#2d6b2d]">pet</span><span className="text-[#6fb83f]">together</span><span className="text-[#6fb83f] ml-1">🍀</span>
+        <Link href="/" className="text-2xl tracking-tight flex items-center gap-2">
+          <BichonMascot size={36} />
+          <span className="text-[#2d6b2d]">pet</span><span className="text-[#6fb83f]">together</span>
         </Link>
 
         {/* 데스크탑 메뉴 */}
