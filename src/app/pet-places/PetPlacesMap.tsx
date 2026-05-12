@@ -20,6 +20,7 @@ interface Place {
   link?: string
   rawCategory?: string
   // Gemini 보강 정보
+  petFriendly?: '가능' | '조건부' | '불가' | string
   vaccination?: string
   carrierRequired?: boolean
   diningArea?: string
@@ -70,12 +71,13 @@ export default function PetPlacesMap() {
     batch.forEach((p, i) => {
       if (enrichments[i]) byId.set(p.id, enrichments[i])
     })
-    setPlaces(prev =>
-      prev.map(p => {
+    setPlaces(prev => {
+      const updated = prev.map(p => {
         const e = byId.get(p.id)
         if (!e) return p
         return {
           ...p,
+          petFriendly: e.petFriendly,
           vaccination: e.vaccination,
           carrierRequired: e.carrierRequired,
           diningArea: e.diningArea,
@@ -91,13 +93,23 @@ export default function PetPlacesMap() {
           enriching: false,
         }
       })
-    )
+      // petFriendly === '불가' 항목 제거
+      const filtered = updated.filter(p => p.petFriendly !== '불가')
+      // 지도 마커도 다시 그리기
+      if (mapInstanceRef.current && lastSearchCenterRef.current) {
+        renderMarkers(filtered, lastSearchCenterRef.current[0], lastSearchCenterRef.current[1])
+      }
+      return filtered
+    })
     setSelected(prev => {
       if (!prev) return prev
       const e = byId.get(prev.id)
       if (!e) return prev
+      // 불가 판정 시 선택 해제
+      if (e.petFriendly === '불가') return null
       return {
         ...prev,
+        petFriendly: e.petFriendly,
         vaccination: e.vaccination,
         carrierRequired: e.carrierRequired,
         diningArea: e.diningArea,
@@ -484,6 +496,11 @@ export default function PetPlacesMap() {
                       {p.discoveredVia === 'ai' && (
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-pink-50 text-pink-700 border-pink-200">
                           ✨ AI 추천
+                        </span>
+                      )}
+                      {p.petFriendly === '조건부' && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium border bg-yellow-50 text-yellow-700 border-yellow-200">
+                          ⚠️ 조건부 동반
                         </span>
                       )}
                       {p.hasOutdoorPlayground && p.category !== 'playground' && (

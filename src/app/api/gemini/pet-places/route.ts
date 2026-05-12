@@ -25,17 +25,22 @@ export async function POST(request: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey)
 
-    const prompt = `한국 애견 동반 장소 ${places.length}곳의 일반적 규정을 평균 기준으로 추정하세요.
+    const prompt = `2026년 현재 한국 애견 동반 장소 ${places.length}곳을 평가하세요.
 
-${places.map((p: any, i: number) => `${i + 1}. ${p.name} [${p.categoryLabel}] ${p.address || ''}`).join('\n')}
+${places.map((p: any, i: number) => `${i + 1}. ${p.name} [${p.categoryLabel}] ${p.address || ''} / 카카오카테고리: ${p.rawCategory || ''}`).join('\n')}
 
-입력 순서대로 JSON 배열:
+각 장소가:
+1. 실제로 반려동물 동반이 가능한 업종인지 (장소명·카테고리로 판단)
+2. 일반적인 동반 규정
+
+입력 순서대로 JSON 배열로:
 [{
+  "petFriendly": "가능|조건부|불가" (불가: 일반 식당/병원/사무실/마트 등 동반 불가능 업종, 조건부: 외부석만 등 일부만 가능, 가능: 전체 동반 OK),
   "vaccination": "필수|권장|불필요|확인필요",
   "carrierRequired": true/false,
   "diningArea": "전체|외부석만|특정구역만|해당없음",
   "sizeLimit": "소형견만|전 견종|중대형 가능 등",
-  "hasOutdoorPlayground": true/false (이름에 도그파크/펜션/대형이면 true),
+  "hasOutdoorPlayground": true/false,
   "grassType": "천연잔디|인조잔디|흙|복합|해당없음",
   "playgroundSize": "소형|중형|대형|해당없음",
   "sizeSeparation": true/false,
@@ -44,6 +49,11 @@ ${places.map((p: any, i: number) => `${i + 1}. ${p.name} [${p.categoryLabel}] ${
   "rules": ["짧은 규정 3개"],
   "summary": "한줄 요약"
 }]
+
+petFriendly 판단 가이드 (엄격하게):
+- 이름/카테고리가 일반 음식점·일반 카페·병원·약국·세탁소·마트 → "불가"
+- 도그카페·애견동반카페·애견동반식당·도그파크·애견운동장·펜션 → "가능"
+- 키즈카페·일반음식점인데 외부석에서만 가능하다고 알려진 곳 → "조건부"
 
 JSON 배열만 반환.`
 
