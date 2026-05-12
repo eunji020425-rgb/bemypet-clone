@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const lng = searchParams.get('lng')
   const radius = searchParams.get('radius') || '20000'
 
-  const kakaoKey = process.env.KAKAO_REST_API_KEY
+  const kakaoKey = process.env.KAKAO_REST_API_KEY?.trim()
 
   console.log('[hospitals] kakaoKey exists:', !!kakaoKey, 'lat:', lat, 'lng:', lng)
 
