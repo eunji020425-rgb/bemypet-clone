@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import { createClient } from '@/lib/supabase/client'
 import { useWalkPresence, getOrCreateAnonId } from './useWalkPresence'
 import { useWalkTracker, formatDistance, formatDurationShort } from './useWalkTracker'
+import { useCompass, bearing } from './useCompass'
 
 interface Trail {
   id: string
@@ -56,6 +57,15 @@ function makeMarkerIcon(L: any, index: number, count: number) {
   })
 }
 
+function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000
+  const toRad = (d: number) => d * Math.PI / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -71,8 +81,10 @@ export default function WalkPage() {
   const polylineRef = useRef<any>(null)        // 내가 실제 걸은 GPS 경로 (초록 실선)
   const navlineRef = useRef<any>(null)          // 목적지까지 추천 경로 (파란 굵은 실선)
   const dstMarkerRef = useRef<any>(null)        // 목적지 깃발 마커
+  const arrowsRef = useRef<any[]>([])           // 경로 위 방향 화살표
   const [navRoute, setNavRoute] = useState<{ distance: number; duration: number; geometry: [number, number][] } | null>(null)
   const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
+  const [crossings, setCrossings] = useState<number | null>(null)
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -111,12 +123,13 @@ export default function WalkPage() {
   const trailIds = useMemo(() => trails.map(t => t.id), [trails])
   const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick, selfIsAuth)
   const tracker = useWalkTracker(!!activeTrail)
+  const compass = useCompass(!!activeTrail)
 
   const startWalkingFor = async (t: Trail) => {
     await startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
-    // 산책 시작 즉시 OSRM 도보 경로 호출
     setNavRoute(null)
     setArrivalState('far')
+    setCrossings(null)
     if (userPos) {
       try {
         const res = await fetch(
@@ -130,6 +143,12 @@ export default function WalkPage() {
               duration: data.duration,
               geometry: data.geometry,
             })
+            // 횡단보도 카운트 (백그라운드, 실패해도 OK)
+            fetch('/api/walk/crossings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ geometry: data.geometry }),
+            }).then(r => r.json()).then(d => setCrossings(d?.count ?? 0)).catch(() => {})
           }
         }
       } catch {}
@@ -138,6 +157,7 @@ export default function WalkPage() {
   const stopWalkingWithData = () => {
     setNavRoute(null)
     setArrivalState('far')
+    setCrossings(null)
     stopWalking(tracker.distance, tracker.path)
   }
 
@@ -319,9 +339,11 @@ export default function WalkPage() {
       const map = mapInstanceRef.current
       if (!map) return
 
-      // 기존 nav 정리
+      // 기존 nav/화살표 정리
       if (navlineRef.current) { navlineRef.current.remove(); navlineRef.current = null }
       if (dstMarkerRef.current) { dstMarkerRef.current.remove(); dstMarkerRef.current = null }
+      arrowsRef.current.forEach(a => a.remove())
+      arrowsRef.current = []
 
       if (!navRoute || !activeTrail) return
 
@@ -333,6 +355,27 @@ export default function WalkPage() {
         lineCap: 'round',
         lineJoin: 'round',
       }).addTo(map)
+
+      // 방향 화살표 — 누적 거리 80m마다 하나씩 배치
+      const ARROW_GAP_M = 80
+      let acc = 0
+      for (let i = 0; i < navRoute.geometry.length - 1; i++) {
+        const [lat1, lng1] = navRoute.geometry[i]
+        const [lat2, lng2] = navRoute.geometry[i + 1]
+        const segM = haversineM(lat1, lng1, lat2, lng2)
+        acc += segM
+        if (acc >= ARROW_GAP_M) {
+          acc = 0
+          const brg = bearing(lat1, lng1, lat2, lng2)
+          const arrowIcon = L.divIcon({
+            html: `<div style="transform:rotate(${brg}deg);width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;text-shadow:0 0 3px rgba(0,0,0,0.6);font-size:20px;font-weight:bold;line-height:1">▲</div>`,
+            className: '', iconAnchor: [12, 12],
+          })
+          const midLat = (lat1 + lat2) / 2
+          const midLng = (lng1 + lng2) / 2
+          arrowsRef.current.push(L.marker([midLat, midLng], { icon: arrowIcon, interactive: false, zIndexOffset: 500 }).addTo(map))
+        }
+      }
 
       // 목적지 깃발 마커
       const dst = navRoute.geometry[navRoute.geometry.length - 1]
@@ -491,6 +534,11 @@ export default function WalkPage() {
                 <span className="text-white/70">· 약 {Math.round(navRoute.duration / 60)}분</span>
               </span>
             )}
+            {crossings !== null && (
+              <span className="flex items-center gap-1">
+                🚸 횡단보도 <strong className="text-base text-white">{crossings}개</strong>
+              </span>
+            )}
             <span className="flex items-center gap-1">
               📏 걸은거리 <strong className="text-base text-white">{formatDistance(tracker.distance)}</strong>
             </span>
@@ -515,6 +563,38 @@ export default function WalkPage() {
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="lg:w-3/5 relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '550px' }} />
+
+          {/* 나침반 위젯 (산책 중일 때만, 우하단) */}
+          {activeTrail && (
+            <div className="absolute bottom-3 right-3 z-[1000]">
+              {compass.needsPermission ? (
+                <button
+                  onClick={compass.requestPermission}
+                  className="bg-white shadow-lg rounded-full px-3 py-2 text-xs font-bold text-[#3a7ab8] border border-[#d6e6ff] hover:bg-[#f0f6ff]"
+                >
+                  🧭 나침반 켜기
+                </button>
+              ) : compass.heading !== null ? (
+                <div className="bg-white/95 shadow-lg rounded-full w-14 h-14 flex items-center justify-center border border-[#d6e6ff]">
+                  <div
+                    style={{ transform: `rotate(${-compass.heading}deg)`, transition: 'transform 0.2s' }}
+                    className="w-10 h-10 flex items-center justify-center"
+                  >
+                    <svg viewBox="0 0 40 40" width="40" height="40">
+                      <polygon points="20,4 14,20 20,16 26,20" fill="#ef4444" />
+                      <polygon points="20,36 14,20 20,24 26,20" fill="#94a3b8" />
+                      <text x="20" y="11" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#1f2937">N</text>
+                    </svg>
+                  </div>
+                </div>
+              ) : compass.unsupported ? null : (
+                <div className="bg-white/80 shadow rounded-full px-2 py-1 text-[10px] text-[#6a7c95]">
+                  🧭 ...
+                </div>
+              )}
+            </div>
+          )}
+
           {showResearchBtn && (
             <button
               onClick={() => {
