@@ -42,7 +42,8 @@ export default function WritePage() {
         .from('post-images')
         .upload(path, imageFile)
       if (uploadError) {
-        setError('이미지 업로드에 실패했습니다.')
+        console.error('[upload error]', uploadError)
+        setError(`이미지 업로드 실패: ${uploadError.message}`)
         setLoading(false)
         return
       }
@@ -59,7 +60,8 @@ export default function WritePage() {
 
     setLoading(false)
     if (insertError) {
-      setError('게시글 작성에 실패했습니다.')
+      console.error('[insert error]', insertError)
+      setError(`게시글 작성 실패: ${insertError.message}${insertError.details ? ' / ' + insertError.details : ''}${insertError.hint ? ' / hint: ' + insertError.hint : ''}`)
     } else {
       router.push('/community')
       router.refresh()
