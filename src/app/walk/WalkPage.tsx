@@ -319,8 +319,20 @@ export default function WalkPage() {
         body: JSON.stringify({ lat, lng, rect }),
       })
       const data = await res.json()
-      // AI 분석 전까지는 일단 '보통'으로 임시 분류 (미분석 카테고리 없애기 위해)
-      const parks: Trail[] = (data.parks || []).map((p: Trail) => ({ ...p, difficulty: '보통', enriching: true }))
+      // AI 분석 전까지 한국 공공 산책로 표준 규정으로 기본값 설정
+      // (동물보호법: 목줄 + 배변봉투 의무, 모든 공원에 적용)
+      // AI 분석이 끝나면 더 정확한 값(견종 제한, 위험요소 등)으로 덮어씀
+      const parks: Trail[] = (data.parks || []).map((p: Trail) => ({
+        ...p,
+        difficulty: '보통',
+        dogAllowed: 'leashed_only',
+        leashRequired: true,
+        leashMaxLengthCm: 200,
+        pickupRequired: true,
+        confidence: 0.5,
+        sourceType: 'ai_extracted',
+        enriching: true,
+      }))
       setTrails(parks)
       await initMap(lat, lng, parks)
       setLoading(false)
