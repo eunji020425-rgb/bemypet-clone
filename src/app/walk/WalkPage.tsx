@@ -81,7 +81,7 @@ export default function WalkPage() {
   const polylineRef = useRef<any>(null)        // 내가 실제 걸은 GPS 경로 (초록 실선)
   const navlineRef = useRef<any>(null)          // 목적지까지 추천 경로 (파란 굵은 실선)
   const dstMarkerRef = useRef<any>(null)        // 목적지 깃발 마커
-  const arrowsRef = useRef<any[]>([])           // 경로 위 방향 화살표
+  const meMarkerRef = useRef<any>(null)         // 내 위치 + 진행방향 화살표
   const [navRoute, setNavRoute] = useState<{ distance: number; duration: number; geometry: [number, number][] } | null>(null)
   const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
   const [crossings, setCrossings] = useState<number | null>(null)
@@ -339,11 +339,9 @@ export default function WalkPage() {
       const map = mapInstanceRef.current
       if (!map) return
 
-      // 기존 nav/화살표 정리
+      // 기존 nav 정리
       if (navlineRef.current) { navlineRef.current.remove(); navlineRef.current = null }
       if (dstMarkerRef.current) { dstMarkerRef.current.remove(); dstMarkerRef.current = null }
-      arrowsRef.current.forEach(a => a.remove())
-      arrowsRef.current = []
 
       if (!navRoute || !activeTrail) return
 
@@ -355,27 +353,6 @@ export default function WalkPage() {
         lineCap: 'round',
         lineJoin: 'round',
       }).addTo(map)
-
-      // 방향 화살표 — 누적 거리 80m마다 하나씩 배치
-      const ARROW_GAP_M = 80
-      let acc = 0
-      for (let i = 0; i < navRoute.geometry.length - 1; i++) {
-        const [lat1, lng1] = navRoute.geometry[i]
-        const [lat2, lng2] = navRoute.geometry[i + 1]
-        const segM = haversineM(lat1, lng1, lat2, lng2)
-        acc += segM
-        if (acc >= ARROW_GAP_M) {
-          acc = 0
-          const brg = bearing(lat1, lng1, lat2, lng2)
-          const arrowIcon = L.divIcon({
-            html: `<div style="transform:rotate(${brg}deg);width:24px;height:24px;display:flex;align-items:center;justify-content:center;color:white;text-shadow:0 0 3px rgba(0,0,0,0.6);font-size:20px;font-weight:bold;line-height:1">▲</div>`,
-            className: '', iconAnchor: [12, 12],
-          })
-          const midLat = (lat1 + lat2) / 2
-          const midLng = (lng1 + lng2) / 2
-          arrowsRef.current.push(L.marker([midLat, midLng], { icon: arrowIcon, interactive: false, zIndexOffset: 500 }).addTo(map))
-        }
-      }
 
       // 목적지 깃발 마커
       const dst = navRoute.geometry[navRoute.geometry.length - 1]
@@ -391,6 +368,66 @@ export default function WalkPage() {
 
     return () => { cancelled = true }
   }, [navRoute, activeTrail])
+
+  // 내 위치 마커 — 네이버 스타일 (파란 점 + 방향 콘)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!mapInstanceRef.current) return
+
+    let cancelled = false
+    ;(async () => {
+      const L = (await import('leaflet')).default
+      if (cancelled) return
+      const map = mapInstanceRef.current
+      if (!map) return
+
+      // 산책 안 중이거나 좌표 없으면 정리
+      if (!activeTrail || !tracker.coords) {
+        if (meMarkerRef.current) { meMarkerRef.current.remove(); meMarkerRef.current = null }
+        return
+      }
+
+      const { lat, lng } = tracker.coords
+
+      // 헤딩: 나침반 > 직전 GPS 이동 방향
+      let heading: number | null = compass.heading
+      if (heading == null && tracker.path.length >= 2) {
+        const a = tracker.path[tracker.path.length - 2]
+        const b = tracker.path[tracker.path.length - 1]
+        heading = bearing(a[0], a[1], b[0], b[1])
+      }
+
+      const html = `
+        <div style="position:relative;width:60px;height:60px;pointer-events:none">
+          ${heading != null ? `
+            <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(${heading}deg);width:60px;height:60px;display:flex;align-items:flex-start;justify-content:center">
+              <svg width="60" height="60" viewBox="0 0 60 60" style="overflow:visible">
+                <defs>
+                  <linearGradient id="navConeGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+                    <stop offset="0%" stop-color="#2563eb" stop-opacity="0.6"/>
+                    <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M30 4 L48 38 L30 30 L12 38 Z" fill="url(#navConeGrad)" />
+              </svg>
+            </div>
+          ` : ''}
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:rgba(37,99,235,0.18)"></div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 8px rgba(37,99,235,0.5)"></div>
+        </div>`
+
+      const icon = L.divIcon({ html, className: '', iconAnchor: [30, 30] })
+
+      if (meMarkerRef.current) {
+        meMarkerRef.current.setLatLng([lat, lng])
+        meMarkerRef.current.setIcon(icon)
+      } else {
+        meMarkerRef.current = L.marker([lat, lng], { icon, zIndexOffset: 2000, interactive: false }).addTo(map)
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [activeTrail, tracker.coords, tracker.path, compass.heading])
 
   // 도착 감지 (현 위치 ↔ 목적지)
   useEffect(() => {
