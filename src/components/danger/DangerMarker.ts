@@ -24,6 +24,12 @@ export function makeDangerIcon(L: LeafletNs, category: DangerCategory) {
   })
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c] ?? c))
+}
+
 export function makeDangerPopupHtml(r: DangerReport): string {
   const meta = DANGER_META[r.category]
   const remaining = formatTimeRemaining(r.expires_at)
@@ -31,8 +37,11 @@ export function makeDangerPopupHtml(r: DangerReport): string {
   const createdStr =
     `${created.getMonth() + 1}/${created.getDate()} ` +
     `${String(created.getHours()).padStart(2, '0')}:${String(created.getMinutes()).padStart(2, '0')}`
+  const noteHtml = r.note
+    ? `<div style="font-size:12px;color:#2a3a55;margin-top:6px;padding:6px 8px;background:#f1f5f9;border-radius:6px;border-left:3px solid ${meta.color}">${escapeHtml(r.note)}</div>`
+    : ''
   return `
-    <div style="min-width:140px">
+    <div style="min-width:160px;max-width:220px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <span style="font-size:18px">${meta.emoji}</span>
         <strong style="color:${meta.color};font-size:14px">${meta.label}</strong>
@@ -42,6 +51,7 @@ export function makeDangerPopupHtml(r: DangerReport): string {
         ${remaining}
         ${r.radius_m ? `<br/>반경 ${r.radius_m}m` : ''}
       </div>
+      ${noteHtml}
     </div>
   `
 }

@@ -54,4 +54,5 @@ export interface DangerReport {
   status: 'active' | 'expired' | 'removed'
   created_at: string
   expires_at: string
+  note?: string | null
 }

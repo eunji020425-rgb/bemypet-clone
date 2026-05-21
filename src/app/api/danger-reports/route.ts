@@ -9,6 +9,7 @@ const PostSchema = z.object({
   categories: z.array(z.enum(DANGER_CATEGORIES)).min(1).max(5),
   lat: z.number().min(33).max(39),
   lng: z.number().min(124).max(132),
+  note: z.string().max(200).optional(),
 })
 
 export async function POST(req: Request) {
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     p_categories: parsed.data.categories,
     p_lat: parsed.data.lat,
     p_lng: parsed.data.lng,
+    p_note: parsed.data.note ?? null,
   })
 
   if (error) {
