@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
 
 export const metadata: Metadata = {
   title: "PetTogether - 반려동물과의 평화로운 일상",
@@ -30,12 +31,16 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <footer className="text-center text-xs text-[#6a7c95] py-8 mt-10">
-          © 2024 PetTogether. All rights reserved.
-        </footer>
+      <body className="min-h-full">
+        {/* 모바일 앱 프레임: 가운데 정렬 최대 480px, 데스크탑은 양쪽에 그라디언트 배경 */}
+        <div className="mx-auto max-w-[480px] min-h-screen bg-[#f0f6ff]/40 shadow-[0_0_40px_rgba(58,122,184,0.08)] flex flex-col relative">
+          <Header />
+          <main className="flex-1 pb-20">{children}</main>
+          <footer className="text-center text-[10px] text-[#94a3b8] py-4 pb-20">
+            © 2026 PetTogether
+          </footer>
+          <BottomNav />
+        </div>
       </body>
     </html>
   );

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { Menu, X, Map as MapIcon, Shield, Footprints } from 'lucide-react'
+import { Menu, X, Shield, Bell, LogOut } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -43,71 +43,75 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/65 border-b border-white/50">
-      <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
-        {/* 로고 */}
-        <Link href="/" className="text-2xl tracking-tight" style={{ fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.5px' }}>
-          <span className="text-[#2a3a55]">pet</span><span className="italic text-[#3a7ab8]">together</span>
+    <header
+      className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-[#e6effc]"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
+      <div className="px-4 h-12 flex items-center justify-between">
+        {/* 좌측 햄버거 */}
+        <button
+          className="p-1.5 -ml-1.5 text-[#2a3a55] hover:text-[#3a7ab8]"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="menu"
+        >
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
+        {/* 로고 (가운데) */}
+        <Link
+          href="/"
+          className="text-lg tracking-tight"
+          style={{ fontFamily: "'DM Serif Display', serif", letterSpacing: '-0.5px' }}
+        >
+          <span className="text-[#2a3a55]">pet</span>
+          <span className="italic text-[#3a7ab8]">together</span>
         </Link>
 
-        {/* 데스크탑 메뉴 */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#2a3a55]">
-          <Link href="/map" className="hover:text-[#3a7ab8] transition-colors flex items-center gap-1.5 text-[#3a7ab8] font-semibold"><MapIcon size={14}/>지도</Link>
-          <Link href="/walk" className="hover:text-[#3a7ab8] transition-colors flex items-center gap-1.5"><Footprints size={14}/>산책</Link>
-          <Link href="/" className="hover:text-[#3a7ab8] transition-colors">홈</Link>
-          <Link href="/community" className="hover:text-[#3a7ab8] transition-colors">커뮤니티</Link>
-          <Link href="/chat" className="hover:text-[#3a7ab8] transition-colors">실시간채팅</Link>
-          {isAdmin && (
-            <Link href="/admin" className="text-[#a86570] hover:text-[#a86570]/80 transition-colors flex items-center gap-1.5 font-semibold">
-              <Shield size={14}/>관리자
-            </Link>
-          )}
-        </nav>
-
-        {/* 우측 버튼 영역 */}
-        <div className="flex items-center gap-2">
+        {/* 우측: 알림 + 로그인/아웃 */}
+        <div className="flex items-center gap-1">
+          <button className="p-1.5 text-[#94a3b8] hover:text-[#3a7ab8]" aria-label="notifications">
+            <Bell size={18} />
+          </button>
           {user ? (
             <button
               onClick={handleLogout}
-              className="text-sm text-[#6a7c95] hover:text-[#2a3a55] px-3 py-2 transition-colors"
+              className="p-1.5 text-[#94a3b8] hover:text-[#ef4444]"
+              aria-label="logout"
+              title="로그아웃"
             >
-              로그아웃
+              <LogOut size={18} />
             </button>
           ) : (
             <Link
               href="/auth/login"
-              className="text-sm font-medium text-[#2a3a55] hover:text-[#3a7ab8] px-3 py-2 transition-colors"
+              className="text-xs font-bold text-[#3a7ab8] px-2 py-1"
             >
               로그인
             </Link>
           )}
-          <button
-            className="md:hidden p-2 text-[#2a3a55]"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </div>
 
-      {/* 모바일 메뉴 */}
+      {/* 햄버거 메뉴 (열렸을 때) */}
       {menuOpen && (
-        <div className="md:hidden backdrop-blur-xl bg-white/80 border-t border-white/50 px-5 py-4 flex flex-col gap-4 text-sm font-medium text-[#2a3a55]">
-          <Link href="/map" onClick={() => setMenuOpen(false)} className="text-[#3a7ab8] font-semibold">🗺️ 통합 지도</Link>
-          <Link href="/walk" onClick={() => setMenuOpen(false)}>🐾 산책</Link>
-          <Link href="/" onClick={() => setMenuOpen(false)}>홈</Link>
-          <Link href="/community" onClick={() => setMenuOpen(false)}>커뮤니티</Link>
-          <Link href="/chat" onClick={() => setMenuOpen(false)}>실시간채팅</Link>
-          {isAdmin && (
-            <Link href="/admin" onClick={() => setMenuOpen(false)} className="text-[#a86570] font-semibold">
-              🛡️ 관리자 페이지
-            </Link>
-          )}
-          {user && (
-            <Link href="/community/write" onClick={() => setMenuOpen(false)} className="text-[#3a7ab8] font-semibold">
-              ✎ 글쓰기
-            </Link>
-          )}
+        <div className="absolute top-full inset-x-0 bg-white border-b border-[#e6effc] shadow-lg">
+          <nav className="flex flex-col py-2 text-sm text-[#2a3a55]">
+            <Link href="/" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">🏠 홈</Link>
+            <Link href="/map" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">🗺️ 통합 지도</Link>
+            <Link href="/walk" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">🐾 산책</Link>
+            <Link href="/community" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">📝 커뮤니티</Link>
+            <Link href="/chat" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">💬 실시간채팅</Link>
+            {user && (
+              <Link href="/community/write" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 text-[#3a7ab8] font-bold hover:bg-[#f0f6ff]">
+                ✎ 글쓰기
+              </Link>
+            )}
+            {isAdmin && (
+              <Link href="/admin" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 text-[#a86570] font-semibold hover:bg-[#fdf2f4]">
+                <Shield size={14} className="inline mr-1.5" /> 관리자 페이지
+              </Link>
+            )}
+          </nav>
         </div>
       )}
     </header>
