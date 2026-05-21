@@ -5,6 +5,7 @@ import { Navigation, ExternalLink, Footprints, Users } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import { createClient } from '@/lib/supabase/client'
 import { useWalkPresence, getOrCreateAnonId } from './useWalkPresence'
+import { useWalkTracker, formatDistance, formatDurationShort } from './useWalkTracker'
 
 interface Trail {
   id: string
@@ -104,8 +105,10 @@ export default function WalkPage() {
   // 화면에 보이는 산책로 ID들 (메모이즈)
   const trailIds = useMemo(() => trails.map(t => t.id), [trails])
   const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick, selfIsAuth)
+  const tracker = useWalkTracker(!!activeTrail)
 
   const startWalkingFor = (t: Trail) => startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
+  const stopWalkingWithDistance = () => stopWalking(tracker.distance)
 
   const initMap = async (lat: number, lng: number, items: Trail[]) => {
     if (typeof window === 'undefined') return
@@ -326,18 +329,30 @@ export default function WalkPage() {
         </div>
       )}
       {activeTrail && (
-        <div className="bg-gradient-to-r from-[#3a7ab8] to-[#22c55e] text-white rounded-xl px-4 py-3 text-sm font-bold flex items-center justify-between shadow-md">
-          <span className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            🐾 산책 중 — <span className="underline">{trails.find(t => t.id === activeTrail)?.name ?? '산책로'}</span>
-            <span className="text-white/80 font-normal text-xs">· 같이 걷는 사람 {(counts[activeTrail] ?? 1) - 1}명</span>
-          </span>
-          <button
-            onClick={stopWalking}
-            className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full transition"
-          >
-            산책 종료
-          </button>
+        <div className="bg-gradient-to-r from-[#3a7ab8] to-[#22c55e] text-white rounded-xl px-4 py-3 shadow-md">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="flex items-center gap-2 text-sm font-bold flex-1 min-w-0">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse flex-shrink-0" />
+              <span className="truncate">🐾 산책 중 — {trails.find(t => t.id === activeTrail)?.name ?? '산책로'}</span>
+            </span>
+            <button
+              onClick={stopWalkingWithDistance}
+              className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full transition flex-shrink-0"
+            >
+              산책 종료
+            </button>
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-xs text-white/90">
+            <span className="flex items-center gap-1">
+              📏 <strong className="text-base text-white">{formatDistance(tracker.distance)}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              ⏱ <strong className="text-base text-white tabular-nums">{formatDurationShort(tracker.duration)}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              👥 같이 걷는 {(counts[activeTrail] ?? 1) - 1}명
+            </span>
+          </div>
         </div>
       )}
       {(locStatus === 'denied' || locStatus === 'fallback') && (
@@ -415,7 +430,7 @@ export default function WalkPage() {
                     <div className="flex items-center gap-2 mt-2">
                       {activeTrail === t.id ? (
                         <button
-                          onClick={(e) => { e.stopPropagation(); stopWalking() }}
+                          onClick={(e) => { e.stopPropagation(); stopWalkingWithDistance() }}
                           className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition"
                         >
                           <Footprints size={11} /> 산책 종료
@@ -510,7 +525,7 @@ export default function WalkPage() {
                 <span className="flex-1" />
                 {activeTrail === selected.id ? (
                   <button
-                    onClick={stopWalking}
+                    onClick={stopWalkingWithDistance}
                     className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 transition"
                   >
                     <Footprints size={12} /> 산책 종료

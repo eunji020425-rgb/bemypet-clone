@@ -12,6 +12,13 @@ interface Session {
   started_at: string
   ended_at: string | null
   duration_s: number | null
+  distance_m: number | null
+}
+
+function formatDistance(m: number | null | undefined): string {
+  if (!m || m < 0) return '-'
+  if (m < 1000) return `${Math.round(m)}m`
+  return `${(m / 1000).toFixed(2)}km`
 }
 
 function formatDuration(s: number | null): string {
@@ -67,6 +74,7 @@ export default async function WalkHistoryPage() {
   const finished = list.filter(s => s.ended_at && s.duration_s)
   const totalCount = finished.length
   const totalSec = finished.reduce((sum, s) => sum + (s.duration_s ?? 0), 0)
+  const totalDist = finished.reduce((sum, s) => sum + (s.distance_m ?? 0), 0)
   const todayCount = finished.filter(s => new Date(s.started_at) >= today0).length
   const weekCount = finished.filter(s => new Date(s.started_at) >= week0).length
 
@@ -81,7 +89,7 @@ export default async function WalkHistoryPage() {
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <div className="bg-white border border-[#d6e6ff] rounded-2xl p-4">
           <p className="text-xs text-[#6a7c95]">오늘</p>
           <p className="text-2xl font-bold text-[#2a3a55] mt-1">{todayCount}<span className="text-sm font-normal text-[#6a7c95]">회</span></p>
@@ -99,6 +107,15 @@ export default async function WalkHistoryPage() {
           <p className="text-2xl font-bold text-[#3a7ab8] mt-1">
             {Math.floor(totalSec / 3600)}<span className="text-sm font-normal text-[#6a7c95]">시간 </span>
             {Math.floor((totalSec % 3600) / 60)}<span className="text-sm font-normal text-[#6a7c95]">분</span>
+          </p>
+        </div>
+        <div className="bg-white border border-[#d6e6ff] rounded-2xl p-4 col-span-2 md:col-span-1">
+          <p className="text-xs text-[#6a7c95]">총 거리</p>
+          <p className="text-2xl font-bold text-[#22c55e] mt-1">
+            {totalDist < 1000
+              ? <>{Math.round(totalDist)}<span className="text-sm font-normal text-[#6a7c95]">m</span></>
+              : <>{(totalDist / 1000).toFixed(2)}<span className="text-sm font-normal text-[#6a7c95]">km</span></>
+            }
           </p>
         </div>
       </div>
@@ -144,6 +161,11 @@ export default async function WalkHistoryPage() {
                       {!isActive && (
                         <span className="flex items-center gap-1 text-[#3a7ab8] font-bold">
                           <TrendingUp size={11} /> {formatDuration(s.duration_s)}
+                        </span>
+                      )}
+                      {!isActive && s.distance_m != null && s.distance_m > 0 && (
+                        <span className="flex items-center gap-1 text-[#22c55e] font-bold">
+                          📏 {formatDistance(s.distance_m)}
                         </span>
                       )}
                       {s.trail_lat && s.trail_lng && (

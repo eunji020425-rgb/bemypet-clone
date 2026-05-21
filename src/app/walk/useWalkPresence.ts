@@ -110,14 +110,18 @@ export function useWalkPresence(
     }
   }, [selfId, selfNick, activeTrail, activeSessionId, selfIsAuth, supabase])
 
-  const stopWalking = useCallback(async () => {
+  const stopWalking = useCallback(async (distanceM: number = 0) => {
     if (!activeTrail) return
     const ch = channelsRef.current[activeTrail]
     if (ch) await ch.untrack()
     if (selfIsAuth && activeSessionId) {
       const started = sessionStartRef.current ?? Date.now()
       const dur = Math.floor((Date.now() - started) / 1000)
-      await supabase.from('walk_sessions').update({ ended_at: new Date().toISOString(), duration_s: dur }).eq('id', activeSessionId)
+      await supabase.from('walk_sessions').update({
+        ended_at: new Date().toISOString(),
+        duration_s: dur,
+        distance_m: Math.round(distanceM),
+      }).eq('id', activeSessionId)
     }
     setActiveTrail(null)
     setActiveSessionId(null)
