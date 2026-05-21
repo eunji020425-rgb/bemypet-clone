@@ -639,16 +639,18 @@ export default function WalkPage() {
         <div className="relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '320px' }} />
 
-          {/* 내 위치로 돌아가기 (산책 중일 때만, 상단 중앙) */}
-          {activeTrail && tracker.coords && (
+          {/* 내 위치로 돌아가기 (위치 있을 때 항상 상단 중앙) */}
+          {(tracker.coords || userPos) && (
             <button
               onClick={() => {
                 const map = mapInstanceRef.current
-                if (map && tracker.coords) {
-                  map.setView([tracker.coords.lat, tracker.coords.lng], 18, { animate: true })
-                }
+                if (!map) return
+                const target = tracker.coords
+                  ? [tracker.coords.lat, tracker.coords.lng]
+                  : userPos
+                if (target) map.setView(target as [number, number], activeTrail ? 18 : 15, { animate: true })
               }}
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] bg-white shadow-lg rounded-full px-4 py-2 flex items-center gap-1.5 border border-[#d6e6ff] hover:bg-[#f0f6ff] active:scale-95 transition"
+              className="absolute top-3 right-3 z-[1000] bg-white shadow-lg rounded-full px-3 py-2 flex items-center gap-1.5 border border-[#d6e6ff] hover:bg-[#f0f6ff] active:scale-95 transition"
               aria-label="내 위치로 이동"
               title="내 위치로 이동"
             >
