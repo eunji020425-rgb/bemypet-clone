@@ -406,7 +406,30 @@ export default function WalkPage() {
                       </span>
                     </div>
                     <p className="text-xs text-[#888] truncate mt-0.5">{t.address}</p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {/* 산책 시작/종료 토글 (리스트에서 바로) */}
+                    <div className="flex items-center gap-2 mt-2">
+                      {activeTrail === t.id ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); stopWalking() }}
+                          className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition"
+                        >
+                          <Footprints size={11} /> 산책 종료
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startWalking(t.id) }}
+                          disabled={!selfId}
+                          className="bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition"
+                        >
+                          <Footprints size={11} /> 산책 시작
+                        </button>
+                      )}
+                      <span className="text-xs text-[#6a7c95]">
+                        <Users size={11} className="inline mr-0.5" />
+                        지금 {counts[t.id] ?? 0}명
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       {t.difficulty && (
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${DIFF_COLOR[t.difficulty] ?? 'text-gray-600 bg-gray-50 border-gray-200'}`}>
                           {t.difficulty}
