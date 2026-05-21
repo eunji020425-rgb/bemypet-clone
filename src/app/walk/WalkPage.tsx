@@ -639,6 +639,29 @@ export default function WalkPage() {
         <div className="relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '320px' }} />
 
+          {/* 내 위치로 돌아가기 (산책 중일 때만, 좌하단) */}
+          {activeTrail && tracker.coords && (
+            <button
+              onClick={() => {
+                const map = mapInstanceRef.current
+                if (map && tracker.coords) {
+                  map.setView([tracker.coords.lat, tracker.coords.lng], 18, { animate: true })
+                }
+              }}
+              className="absolute bottom-3 left-3 z-[1000] bg-white shadow-lg rounded-full w-12 h-12 flex items-center justify-center border border-[#d6e6ff] hover:bg-[#f0f6ff] active:scale-95 transition"
+              aria-label="내 위치로 이동"
+              title="내 위치로 이동"
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3a7ab8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" fill="#3a7ab8" />
+                <line x1="12" y1="2" x2="12" y2="5" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+                <line x1="2" y1="12" x2="5" y2="12" />
+                <line x1="19" y1="12" x2="22" y2="12" />
+              </svg>
+            </button>
+          )}
+
           {/* 나침반 위젯 (산책 중일 때만, 우하단) */}
           {activeTrail && (
             <div className="absolute bottom-3 right-3 z-[1000]">
