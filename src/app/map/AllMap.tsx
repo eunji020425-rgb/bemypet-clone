@@ -602,10 +602,10 @@ export default function AllMap() {
         })}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col gap-4">
         {/* 지도 */}
-        <div className="lg:w-3/5 relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '600px' }} />
+        <div className="relative">
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '380px' }} />
           {showResearchBtn && (
             <button
               onClick={() => {
@@ -626,7 +626,7 @@ export default function AllMap() {
         </div>
 
         {/* 리스트 */}
-        <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '600px' }}>
+        <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '420px' }}>
           <p className="text-xs text-[#aaa] px-1 pb-1">{filter === 'all' ? '전체' : STYLES[filter].label} · {filtered.length}곳</p>
           {loading && filtered.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">

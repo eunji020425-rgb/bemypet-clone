@@ -604,7 +604,7 @@ export default function WalkPage() {
 
       <div className="flex flex-col gap-4">
         <div className="relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '550px' }} />
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '320px' }} />
 
           {/* 나침반 위젯 (산책 중일 때만, 우하단) */}
           {activeTrail && (
@@ -657,7 +657,7 @@ export default function WalkPage() {
           )}
         </div>
 
-        <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '550px' }}>
+        <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '420px' }}>
           <p className="text-xs text-[#aaa] px-1 pb-1">총 {trails.length}개의 산책로 추천</p>
           {loading && trails.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">

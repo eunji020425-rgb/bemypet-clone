@@ -87,7 +87,7 @@ export default function WalkDetailMap({ path, trailLat, trailLng, trailName }: P
     <div
       ref={mapRef}
       className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]"
-      style={{ height: '480px' }}
+      style={{ height: '340px' }}
     />
   )
 }

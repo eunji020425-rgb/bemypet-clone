@@ -198,10 +198,10 @@ export default function HospitalMap() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col gap-4">
         {/* 지도 */}
-        <div className="lg:w-3/5 relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '550px' }} />
+        <div className="relative">
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '320px' }} />
           {showResearchBtn && (
             <button
               onClick={() => {
@@ -223,7 +223,7 @@ export default function HospitalMap() {
         </div>
 
         {/* 병원 목록 */}
-        <div className="lg:w-2/5 flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '550px' }}>
+        <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '420px' }}>
           <p className="text-xs text-[#aaa] px-1 pb-1">총 {hospitals.length}개의 동물병원</p>
           {loading && hospitals.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">
