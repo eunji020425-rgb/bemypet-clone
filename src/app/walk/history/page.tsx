@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Footprints, Clock, MapPin, TrendingUp } from 'lucide-react'
+import { Footprints, Clock, TrendingUp } from 'lucide-react'
 
 interface Session {
   id: string
@@ -135,9 +135,10 @@ export default async function WalkHistoryPage() {
           {list.map(s => {
             const isActive = !s.ended_at
             return (
-              <div
+              <Link
                 key={s.id}
-                className={`bg-white rounded-xl p-4 border ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff]'}`}
+                href={`/walk/history/${s.id}`}
+                className={`block bg-white rounded-xl p-4 border hover:shadow-md transition-shadow ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#22c55e]' : 'bg-[#d6e6ff]'}`}>
@@ -174,18 +175,11 @@ export default async function WalkHistoryPage() {
                           🗺 경로 {s.path.length}점
                         </span>
                       )}
-                      {s.trail_lat && s.trail_lng && (
-                        <Link
-                          href={`/route?from=walk&name=${encodeURIComponent(s.trail_name ?? '')}&lat=${s.trail_lat}&lng=${s.trail_lng}`}
-                          className="flex items-center gap-1 text-[#3a7ab8] hover:underline"
-                        >
-                          <MapPin size={11} /> 길찾기
-                        </Link>
-                      )}
+                      <span className="text-[#3a7ab8] ml-auto">자세히 →</span>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>
