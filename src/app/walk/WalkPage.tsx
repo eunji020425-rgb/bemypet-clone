@@ -659,9 +659,8 @@ export default function WalkPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '420px' }}>
-          {/* 난이도 필터 탭 */}
-          {trails.length > 0 && (() => {
+        {/* 난이도 필터 탭 (스크롤 영역 밖, 항상 고정) */}
+        {trails.length > 0 && (() => {
             const counts = {
               '전체': trails.length,
               '쉬움': trails.filter(t => t.difficulty === '쉬움').length,
@@ -704,6 +703,7 @@ export default function WalkPage() {
             )
           })()}
 
+        <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '420px' }}>
           <p className="text-xs text-[#aaa] px-1 pb-1">
             {diffFilter === '전체'
               ? `총 ${trails.length}개의 산책로`
