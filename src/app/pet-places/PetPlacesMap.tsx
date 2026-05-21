@@ -438,7 +438,7 @@ export default function PetPlacesMap() {
       <div className="flex flex-col gap-4">
         {/* 지도 */}
         <div className="relative">
-          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '320px' }} />
+          <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '260px' }} />
           {showResearchBtn && (
             <button
               onClick={() => {
