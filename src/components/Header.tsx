@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { Menu, X, Shield, Bell, LogOut } from 'lucide-react'
@@ -11,6 +12,8 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
   const supabase = createClient()
 
@@ -37,9 +40,20 @@ export default function Header() {
   }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    try {
+      await supabase.auth.signOut()
+      // 로컬 스토리지의 supabase 키도 정리 (모바일 잔존 방지)
+      if (typeof window !== 'undefined') {
+        Object.keys(localStorage)
+          .filter(k => k.startsWith('sb-') && k.includes('auth-token'))
+          .forEach(k => localStorage.removeItem(k))
+      }
+    } finally {
+      setUser(null)
+      setIsAdmin(false)
+      router.push('/')
+      router.refresh()
+    }
   }
 
   return (
@@ -95,8 +109,8 @@ export default function Header() {
 
     </header>
 
-    {/* 사이드 드로어 (header 밖, fixed positioning) */}
-    {menuOpen && (
+    {/* 사이드 드로어 - body로 portal해서 stacking context 우회 */}
+    {menuOpen && mounted && createPortal(
       <>
         {/* 어두운 오버레이 (Leaflet 팬 z-index 700보다 높게) */}
         <div
@@ -179,7 +193,8 @@ export default function Header() {
             to { transform: translateX(0); }
           }
         `}</style>
-      </>
+      </>,
+      document.body
     )}
     </>
   )
