@@ -36,6 +36,14 @@ export default function HomePage() {
               <span className="text-xs text-[#2a3a55] font-medium">지도</span>
             </div>
           </Link>
+          <Link href="/walk" className="group">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-full bg-[#b8d3f5] flex items-center justify-center group-hover:scale-105 transition-transform border border-white/50">
+                <Footprints size={22} className="text-[#3a7ab8]" />
+              </div>
+              <span className="text-xs text-[#2a3a55] font-medium">산책</span>
+            </div>
+          </Link>
           <Link href="/community" className="group">
             <div className="flex flex-col items-center gap-2">
               <div className="w-14 h-14 rounded-full bg-[#eaf2ff] flex items-center justify-center group-hover:scale-105 transition-transform border border-white/50">
@@ -64,7 +72,7 @@ export default function HomePage() {
       </section>
 
       {/* 메인 카드 - 통합 지도 추천 */}
-      <Link href="/map" className="block">
+      <Link href="/walk" className="block">
         <section className="mt-6 backdrop-blur-xl bg-white/65 border border-white/50 rounded-3xl p-7 hover:bg-white/75 transition-colors">
           <p className="text-[11px] text-[#3a7ab8] tracking-[2px] font-semibold">— 오늘 —</p>
           <h3 className="mt-2 text-2xl text-[#2a3a55] leading-tight tracking-[-0.5px] font-bold">
@@ -121,7 +129,7 @@ export default function HomePage() {
       {/* 산책로 배너 */}
       <section className="mt-8">
         <Link
-          href="/map"
+          href="/walk"
           className="block bg-gradient-to-br from-[#8fb8e8] to-[#b8d3f5] rounded-3xl p-7 hover:shadow-lg transition-shadow"
         >
           <div className="flex items-center justify-between">
