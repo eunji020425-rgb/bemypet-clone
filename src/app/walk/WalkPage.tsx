@@ -576,14 +576,20 @@ export default function WalkPage() {
     return () => { cancelled = true }
   }, [userPos?.[0], userPos?.[1]])
 
-  // 위험 제보 마커 그리기
+  // 위험 제보 마커 그리기 + 본인 신고 삭제 콜백
   useEffect(() => {
     if (typeof window === 'undefined') return
     const map = mapInstanceRef.current
     if (!map) return
     let cancelled = false
     ;(async () => {
-      const next = await renderDangerReports(map, dangerReports, dangerMarkersRef.current)
+      const supabase = createClient()
+      const handleDelete = async (id: string) => {
+        const { error } = await supabase.from('danger_reports').delete().eq('id', id)
+        if (error) throw error
+        setDangerReports(prev => prev.filter(r => r.id !== id))
+      }
+      const next = await renderDangerReports(map, dangerReports, dangerMarkersRef.current, handleDelete)
       if (!cancelled) dangerMarkersRef.current = next
     })()
     return () => { cancelled = true }

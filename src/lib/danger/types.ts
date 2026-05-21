@@ -55,4 +55,5 @@ export interface DangerReport {
   created_at: string
   expires_at: string
   note?: string | null
+  is_mine?: boolean
 }

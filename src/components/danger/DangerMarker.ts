@@ -40,11 +40,15 @@ export function makeDangerPopupHtml(r: DangerReport): string {
   const noteHtml = r.note
     ? `<div style="font-size:12px;color:#2a3a55;margin-top:6px;padding:6px 8px;background:#f1f5f9;border-radius:6px;border-left:3px solid ${meta.color}">${escapeHtml(r.note)}</div>`
     : ''
+  const deleteBtn = r.is_mine
+    ? `<button type="button" data-delete-id="${r.id}" style="margin-top:8px;width:100%;padding:6px 10px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer">🗑 내 신고 삭제</button>`
+    : ''
   return `
     <div style="min-width:160px;max-width:220px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <span style="font-size:18px">${meta.emoji}</span>
         <strong style="color:${meta.color};font-size:14px">${meta.label}</strong>
+        ${r.is_mine ? '<span style="margin-left:auto;font-size:9px;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;font-weight:bold">내 신고</span>' : ''}
       </div>
       <div style="font-size:11px;color:#6a7c95;line-height:1.5">
         등록: ${createdStr}<br/>
@@ -52,6 +56,7 @@ export function makeDangerPopupHtml(r: DangerReport): string {
         ${r.radius_m ? `<br/>반경 ${r.radius_m}m` : ''}
       </div>
       ${noteHtml}
+      ${deleteBtn}
     </div>
   `
 }
@@ -78,12 +83,14 @@ function spreadOverlaps(reports: DangerReport[]): Array<DangerReport & { offsetI
 
 /**
  * 지도에 위험 제보 마커들을 한 번에 갱신
+ * @param onDelete 본인 신고에서 "내 신고 삭제" 버튼 클릭 시 호출
  * @returns 추가된 Leaflet 마커 배열
  */
 export async function renderDangerReports(
   map: import('leaflet').Map,
   reports: DangerReport[],
   prevMarkers: import('leaflet').Marker[],
+  onDelete?: (id: string) => Promise<void>,
 ): Promise<import('leaflet').Marker[]> {
   prevMarkers.forEach(m => m.remove())
   if (reports.length === 0) return []
@@ -106,6 +113,33 @@ export async function renderDangerReports(
     const marker = L.marker([lat, lng], { icon, zIndexOffset: 800 })
       .addTo(map)
       .bindPopup(makeDangerPopupHtml(r))
+
+    // 본인 신고에 한해 popup이 열릴 때 삭제 버튼에 핸들러 부착
+    if (r.is_mine && onDelete) {
+      marker.on('popupopen', () => {
+        const popupEl = marker.getPopup()?.getElement()
+        if (!popupEl) return
+        const btn = popupEl.querySelector<HTMLButtonElement>(`button[data-delete-id="${r.id}"]`)
+        if (!btn || btn.dataset.bound === '1') return
+        btn.dataset.bound = '1'
+        btn.addEventListener('click', async (ev) => {
+          ev.stopPropagation()
+          if (!confirm('이 위험 신고를 삭제할까요?')) return
+          btn.disabled = true
+          btn.textContent = '삭제 중...'
+          try {
+            await onDelete(r.id)
+            marker.closePopup()
+            marker.remove()
+          } catch {
+            btn.disabled = false
+            btn.textContent = '🗑 내 신고 삭제'
+            alert('삭제에 실패했어요. 잠시 후 다시 시도해 주세요.')
+          }
+        })
+      })
+    }
+
     out.push(marker)
   }
   return out
