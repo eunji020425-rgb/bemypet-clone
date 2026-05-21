@@ -39,14 +39,14 @@ export default function WritePage() {
       const ext = imageFile.name.split('.').pop()
       const path = `posts/${user.id}/${Date.now()}.${ext}`
       const { error: uploadError } = await supabase.storage
-        .from('images')
+        .from('post-images')
         .upload(path, imageFile)
       if (uploadError) {
         setError('이미지 업로드에 실패했습니다.')
         setLoading(false)
         return
       }
-      const { data: urlData } = supabase.storage.from('images').getPublicUrl(path)
+      const { data: urlData } = supabase.storage.from('post-images').getPublicUrl(path)
       imageUrl = urlData.publicUrl
     }
 
