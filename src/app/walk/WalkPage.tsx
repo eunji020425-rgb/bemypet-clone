@@ -68,9 +68,11 @@ export default function WalkPage() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
-  const polylineRef = useRef<any>(null)
-  const guidelineRef = useRef<any>(null)
-  const [guideRoute, setGuideRoute] = useState<{ distance: number; duration: number } | null>(null)
+  const polylineRef = useRef<any>(null)        // 내가 실제 걸은 GPS 경로 (초록 실선)
+  const navlineRef = useRef<any>(null)          // 목적지까지 추천 경로 (파란 굵은 실선)
+  const dstMarkerRef = useRef<any>(null)        // 목적지 깃발 마커
+  const [navRoute, setNavRoute] = useState<{ distance: number; duration: number; geometry: [number, number][] } | null>(null)
+  const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -110,8 +112,34 @@ export default function WalkPage() {
   const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick, selfIsAuth)
   const tracker = useWalkTracker(!!activeTrail)
 
-  const startWalkingFor = (t: Trail) => startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
-  const stopWalkingWithData = () => stopWalking(tracker.distance, tracker.path)
+  const startWalkingFor = async (t: Trail) => {
+    await startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
+    // 산책 시작 즉시 OSRM 도보 경로 호출
+    setNavRoute(null)
+    setArrivalState('far')
+    if (userPos) {
+      try {
+        const res = await fetch(
+          `/api/route?mode=foot&srcLat=${userPos[0]}&srcLng=${userPos[1]}&dstLat=${t.lat}&dstLng=${t.lng}`
+        )
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.geometry) {
+            setNavRoute({
+              distance: data.distance,
+              duration: data.duration,
+              geometry: data.geometry,
+            })
+          }
+        }
+      } catch {}
+    }
+  }
+  const stopWalkingWithData = () => {
+    setNavRoute(null)
+    setArrivalState('far')
+    stopWalking(tracker.distance, tracker.path)
+  }
 
   const initMap = async (lat: number, lng: number, items: Trail[]) => {
     if (typeof window === 'undefined') return
@@ -279,49 +307,60 @@ export default function WalkPage() {
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
 
-  // 선택된 산책로로 가는 도보 가이드 경로 (OSRM)
+  // 산책 시작 시 받은 navRoute → 지도에 굵은 파란 선 + 목적지 깃발
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!mapInstanceRef.current) return
     let cancelled = false
 
     ;(async () => {
-      // 이전 가이드라인 제거
-      if (guidelineRef.current) {
-        guidelineRef.current.remove()
-        guidelineRef.current = null
-      }
-      setGuideRoute(null)
+      const L = (await import('leaflet')).default
+      if (cancelled) return
+      const map = mapInstanceRef.current
+      if (!map) return
 
-      if (!selected || !userPos) return
-      // 너무 멀면 가이드 안 그림 (5km 초과)
-      if (selected.distance > 5) return
+      // 기존 nav 정리
+      if (navlineRef.current) { navlineRef.current.remove(); navlineRef.current = null }
+      if (dstMarkerRef.current) { dstMarkerRef.current.remove(); dstMarkerRef.current = null }
 
-      try {
-        const res = await fetch(
-          `/api/route?mode=foot&srcLat=${userPos[0]}&srcLng=${userPos[1]}&dstLat=${selected.lat}&dstLng=${selected.lng}`
-        )
-        if (!res.ok) return
-        const data = await res.json()
-        if (cancelled || !data?.geometry) return
+      if (!navRoute || !activeTrail) return
 
-        const L = (await import('leaflet')).default
-        const map = mapInstanceRef.current
-        if (!map) return
+      // 추천 경로 굵은 파란 선
+      navlineRef.current = L.polyline(navRoute.geometry, {
+        color: '#2563eb',
+        weight: 7,
+        opacity: 0.85,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(map)
 
-        guidelineRef.current = L.polyline(data.geometry, {
-          color: '#94a3b8',
-          weight: 4,
-          opacity: 0.7,
-          dashArray: '10, 8',
-        }).addTo(map)
+      // 목적지 깃발 마커
+      const dst = navRoute.geometry[navRoute.geometry.length - 1]
+      const flagIcon = L.divIcon({
+        html: `<div style="font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))">🚩</div>`,
+        className: '', iconAnchor: [8, 28],
+      })
+      dstMarkerRef.current = L.marker(dst, { icon: flagIcon, zIndexOffset: 1000 }).addTo(map)
 
-        setGuideRoute({ distance: data.distance, duration: data.duration })
-      } catch {}
+      // 경로 전체가 보이도록 fit
+      map.fitBounds(navlineRef.current.getBounds(), { padding: [60, 60], maxZoom: 16 })
     })()
 
     return () => { cancelled = true }
-  }, [selected, userPos])
+  }, [navRoute, activeTrail])
+
+  // 도착 감지 (현 위치 ↔ 목적지)
+  useEffect(() => {
+    if (!activeTrail || !tracker.coords || !navRoute) {
+      setArrivalState('far')
+      return
+    }
+    const dst = navRoute.geometry[navRoute.geometry.length - 1]
+    const d = calcDistance(tracker.coords.lat, tracker.coords.lng, dst[0], dst[1]) * 1000 // m
+    if (d <= 20) setArrivalState('arrived')
+    else if (d <= 100) setArrivalState('near')
+    else setArrivalState('far')
+  }, [activeTrail, tracker.coords, navRoute])
 
   // 산책 경로 실시간 polyline
   useEffect(() => {
@@ -347,9 +386,9 @@ export default function WalkPage() {
         polylineRef.current.setLatLngs(tracker.path)
       } else {
         polylineRef.current = L.polyline(tracker.path, {
-          color: '#3a7ab8',
+          color: '#22c55e',
           weight: 5,
-          opacity: 0.85,
+          opacity: 0.95,
           lineCap: 'round',
           lineJoin: 'round',
         }).addTo(map)
@@ -424,11 +463,19 @@ export default function WalkPage() {
         </div>
       )}
       {activeTrail && (
-        <div className="bg-gradient-to-r from-[#3a7ab8] to-[#22c55e] text-white rounded-xl px-4 py-3 shadow-md">
+        <div className={`text-white rounded-xl px-4 py-3 shadow-md ${
+          arrivalState === 'arrived' ? 'bg-gradient-to-r from-[#16a34a] to-[#22c55e]'
+          : arrivalState === 'near' ? 'bg-gradient-to-r from-[#f59e0b] to-[#ef4444]'
+          : 'bg-gradient-to-r from-[#3a7ab8] to-[#22c55e]'
+        }`}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <span className="flex items-center gap-2 text-sm font-bold flex-1 min-w-0">
               <span className="w-2 h-2 bg-white rounded-full animate-pulse flex-shrink-0" />
-              <span className="truncate">🐾 산책 중 — {trails.find(t => t.id === activeTrail)?.name ?? '산책로'}</span>
+              <span className="truncate">
+                {arrivalState === 'arrived' ? '🎉 도착!' : arrivalState === 'near' ? '🏁 거의 다 왔어요' : '🐾 산책 중'}
+                {' — '}
+                {trails.find(t => t.id === activeTrail)?.name ?? '산책로'}
+              </span>
             </span>
             <button
               onClick={stopWalkingWithData}
@@ -437,15 +484,21 @@ export default function WalkPage() {
               산책 종료
             </button>
           </div>
-          <div className="flex items-center gap-4 mt-2 text-xs text-white/90">
+          <div className="flex items-center gap-4 mt-2 text-xs text-white/90 flex-wrap">
+            {navRoute && (
+              <span className="flex items-center gap-1">
+                🚩 목적지까지 <strong className="text-base text-white">{Math.round(navRoute.distance)}m</strong>
+                <span className="text-white/70">· 약 {Math.round(navRoute.duration / 60)}분</span>
+              </span>
+            )}
             <span className="flex items-center gap-1">
-              📏 <strong className="text-base text-white">{formatDistance(tracker.distance)}</strong>
+              📏 걸은거리 <strong className="text-base text-white">{formatDistance(tracker.distance)}</strong>
             </span>
             <span className="flex items-center gap-1">
               ⏱ <strong className="text-base text-white tabular-nums">{formatDurationShort(tracker.duration)}</strong>
             </span>
             <span className="flex items-center gap-1">
-              👥 같이 걷는 {(counts[activeTrail] ?? 1) - 1}명
+              👥 {(counts[activeTrail] ?? 1) - 1}명
             </span>
           </div>
         </div>
@@ -611,17 +664,6 @@ export default function WalkPage() {
                   ))}
                 </div>
               )}
-              {/* 도보 가이드 거리/시간 */}
-              {guideRoute && (
-                <div className="mt-3 flex items-center gap-3 bg-[#f0f6ff] rounded-xl px-3 py-2 border border-[#d6e6ff] text-xs">
-                  <span className="text-[#3a7ab8] font-bold">📍 여기서 가는 길</span>
-                  <span className="text-[#2a3a55]">
-                    걸어서 <strong>{Math.round(guideRoute.distance)}m</strong> · 약 <strong>{Math.round(guideRoute.duration / 60)}분</strong>
-                  </span>
-                  <span className="text-[#6a7c95] ml-auto">지도에 점선 ⊿</span>
-                </div>
-              )}
-
               {/* 실시간 인원수 + 산책 시작/종료 */}
               <div className="mt-3 flex items-center gap-2 flex-wrap bg-white rounded-xl px-3 py-2 border border-[#d6e6ff]">
                 <Users size={14} className="text-[#3a7ab8]" />
@@ -647,19 +689,13 @@ export default function WalkPage() {
                 )}
               </div>
 
-              <div className="flex gap-3 mt-3">
-                <a
-                  href={`/route?from=walk&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
-                  className="bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white font-bold text-sm px-4 py-1.5 rounded-full flex items-center gap-1 transition"
-                >
-                  <Navigation size={13} />앱에서 길찾기
-                </a>
-                {selected.link && (
-                  <a href={selected.link} target="_blank" rel="noopener" className="text-sm text-[#888] hover:text-blue-500 font-medium flex items-center gap-1">
-                    <ExternalLink size={13} />카카오맵에서 보기
+              {selected.link && (
+                <div className="flex gap-3 mt-3">
+                  <a href={selected.link} target="_blank" rel="noopener" className="text-xs text-[#888] hover:text-[#3a7ab8] font-medium flex items-center gap-1">
+                    <ExternalLink size={11} />카카오맵에서 보기
                   </a>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <button onClick={() => setSelected(null)} className="text-[#aaa] hover:text-[#444] text-lg font-bold">✕</button>
           </div>
