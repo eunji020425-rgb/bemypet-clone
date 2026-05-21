@@ -36,8 +36,18 @@ export default function RootLayout({
         <div className="mx-auto max-w-[480px] min-h-screen bg-[#f0f6ff]/40 shadow-[0_0_40px_rgba(58,122,184,0.08)] flex flex-col relative">
           <Header />
           <main className="flex-1 pb-20">{children}</main>
-          <footer className="text-center text-[10px] text-[#94a3b8] py-4 pb-20">
-            © 2026 PetTogether
+          <footer className="text-center text-[10px] text-[#94a3b8] py-6 pb-20 px-4 space-y-2">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <a href="/terms" className="hover:text-[#3a7ab8] hover:underline">이용약관</a>
+              <span className="text-[#cbd5e1]">·</span>
+              <a href="/privacy" className="hover:text-[#3a7ab8] hover:underline font-bold">개인정보처리방침</a>
+              <span className="text-[#cbd5e1]">·</span>
+              <a href="/disclaimer" className="hover:text-[#3a7ab8] hover:underline">정보 면책</a>
+            </div>
+            <p className="text-[9px] text-[#cbd5e1] leading-relaxed">
+              자료: 카카오 · 한국관광공사 TourAPI · © OpenStreetMap contributors · OSRM
+            </p>
+            <p>© 2026 PetTogether</p>
           </footer>
           <BottomNav />
         </div>

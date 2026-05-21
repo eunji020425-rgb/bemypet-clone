@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createClient } from '@supabase/supabase-js'
+import { matchTrail } from '@/lib/tourapi'
 
 const MODEL_CHAIN = [
   'gemini-2.5-flash-lite',
@@ -173,11 +174,31 @@ JSON 배열만 반환.`
             if (arr[i]) newEnrichmentsMap.set(needAnalysis[i].id, arr[i])
           }
 
-          // 3. 캐시에 저장
+          // 2.5. TourAPI 매칭 시도 → 매칭되면 source_type='official_api', confidence ↑
+          await Promise.all(needAnalysis.map(async (p: any) => {
+            if (!newEnrichmentsMap.has(p.id)) return
+            try {
+              const tour = await matchTrail(p.name, p.lat, p.lng)
+              if (tour) {
+                const e = newEnrichmentsMap.get(p.id)
+                e._tourMatched = true
+                e._tourSource = 'official_api'
+                e.confidence = Math.max(e.confidence ?? 0.5, 0.85)
+              }
+            } catch {}
+          }))
+
+          // 3. 캐시에 저장 (TourAPI 매칭 정보 반영)
           if (supabase && newEnrichmentsMap.size > 0) {
             const rows = needAnalysis
               .filter((p: any) => newEnrichmentsMap.has(p.id))
-              .map((p: any) => enrichmentToDb(p, newEnrichmentsMap.get(p.id)))
+              .map((p: any) => {
+                const base = enrichmentToDb(p, newEnrichmentsMap.get(p.id))
+                if (newEnrichmentsMap.get(p.id)._tourMatched) {
+                  base.source_type = 'official_api'
+                }
+                return base
+              })
             if (rows.length > 0) {
               await supabase.from('walk_rules').upsert(rows, { onConflict: 'trail_id' })
             }
