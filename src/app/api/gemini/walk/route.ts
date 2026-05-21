@@ -31,6 +31,16 @@ function dbToEnrichment(row: any) {
     dogFriendly: row.dog_friendly,
     accessible: row.accessible,
     hours: row.hours,
+    // 확장 필드
+    dogAllowed: row.dog_allowed,
+    leashRequired: row.leash_required,
+    leashMaxLengthCm: row.leash_max_length_cm,
+    pickupRequired: row.pickup_required,
+    hazards: row.hazards || [],
+    confidence: row.confidence,
+    sourceType: row.source_type,
+    userConfirms: row.user_confirms || 0,
+    userDisputes: row.user_disputes || 0,
   }
 }
 
@@ -47,6 +57,14 @@ function enrichmentToDb(park: any, e: any) {
     dog_friendly: e.dogFriendly,
     accessible: e.accessible,
     hours: e.hours,
+    // 확장 필드
+    dog_allowed: e.dogAllowed,
+    leash_required: e.leashRequired,
+    leash_max_length_cm: e.leashMaxLengthCm,
+    pickup_required: e.pickupRequired,
+    hazards: Array.isArray(e.hazards) ? e.hazards : null,
+    confidence: typeof e.confidence === 'number' ? e.confidence : 0.5,
+    source_type: 'ai_extracted',
     updated_at: new Date().toISOString(),
   }
 }
@@ -99,14 +117,28 @@ export async function POST(request: Request) {
   "hours": "개방 시간 (예: 24시간|05:00-22:00|일출-일몰)",
   "description": "특징과 환경 (2문장)",
   "tip": "강아지 산책 팁 (1문장)",
-  "features": ["특징1","특징2","특징3"]
+  "features": ["특징1","특징2","특징3"],
+
+  "dogAllowed": "allowed|leashed_only|partial|forbidden|unknown",
+  "leashRequired": true,
+  "leashMaxLengthCm": 200,
+  "pickupRequired": true,
+  "hazards": ["tick","snake","wild_boar","steep","slippery_when_wet"],
+  "confidence": 0.7
 }]
 
 판정 가이드:
-- 동네 공원, 둘레길, 하천길, 호숫가, 잘 조성된 산책로 → dogFriendly: "가능", accessible: "양호"
-- 일반 등산로, 산림보호구역, 자연휴양림 → dogFriendly: "조건부", accessible: "보통"
-- 국립공원 내 출입 금지 등산로, 사찰 경내 → dogFriendly: "불가"
+- 동네 공원, 둘레길, 하천길, 호숫가, 잘 조성된 산책로 → dogFriendly: "가능", accessible: "양호", dogAllowed: "leashed_only"
+- 일반 등산로, 산림보호구역, 자연휴양림 → dogFriendly: "조건부", accessible: "보통", dogAllowed: "partial"
+- 국립공원 내 출입 금지 등산로, 사찰 경내 → dogFriendly: "불가", dogAllowed: "forbidden"
 - 차량 진입 어렵거나 입구 험한 곳 → accessible: "불편"
+
+추가 필드 가이드:
+- leashRequired: 한국 동물보호법상 외부 공공장소는 거의 항상 true (잘 모르겠으면 true)
+- leashMaxLengthCm: 보통 200 (2m). 좁은 산책로면 150
+- pickupRequired: 공원이면 거의 항상 true (배변봉투 의무)
+- hazards: 산/숲이면 ["tick"] 또는 ["tick","snake"], 산악지대면 ["wild_boar","steep"], 비온 후 위험한 데크/돌길이면 ["slippery_when_wet"]
+- confidence: 유명 공원·정보 명확 0.8 / 일반 동네 공원 0.6 / 모호한 곳 0.4
 
 장소:
 ${needAnalysis.map((p: any, i: number) => `${i + 1}. ${p.name} (${p.address || ''})`).join('\n')}

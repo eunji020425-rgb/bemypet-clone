@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useWalkPresence, getOrCreateAnonId } from './useWalkPresence'
 import { useWalkTracker, formatDistance, formatDurationShort } from './useWalkTracker'
 import { useCompass, bearing } from './useCompass'
+import DogRulesPanel from './DogRulesPanel'
 
 interface Trail {
   id: string
@@ -24,6 +25,16 @@ interface Trail {
   tip?: string
   features?: string[]
   enriching?: boolean
+  // 반려견 규정 확장 필드 (AI 추출)
+  dogAllowed?: 'allowed' | 'leashed_only' | 'partial' | 'forbidden' | 'unknown'
+  leashRequired?: boolean
+  leashMaxLengthCm?: number
+  pickupRequired?: boolean
+  hazards?: string[]
+  confidence?: number
+  sourceType?: string
+  userConfirms?: number
+  userDisputes?: number
 }
 
 const POP_COLOR: Record<string, string> = {
@@ -235,13 +246,22 @@ export default function WalkPage() {
       setTrails(prev =>
         prev.map((t, i) => ({
           ...t,
-          // AI가 분석 못한 항목은 기본 '보통' 유지
           difficulty: enrichments[i]?.difficulty ?? t.difficulty ?? '보통',
           popularity: enrichments[i]?.popularity,
           length: enrichments[i]?.length,
           description: enrichments[i]?.description,
           tip: enrichments[i]?.tip,
           features: Array.isArray(enrichments[i]?.features) ? enrichments[i].features : undefined,
+          // 확장 필드
+          dogAllowed: enrichments[i]?.dogAllowed,
+          leashRequired: enrichments[i]?.leashRequired,
+          leashMaxLengthCm: enrichments[i]?.leashMaxLengthCm,
+          pickupRequired: enrichments[i]?.pickupRequired,
+          hazards: Array.isArray(enrichments[i]?.hazards) ? enrichments[i].hazards : undefined,
+          confidence: enrichments[i]?.confidence,
+          sourceType: enrichments[i]?.sourceType,
+          userConfirms: enrichments[i]?.userConfirms,
+          userDisputes: enrichments[i]?.userDisputes,
           enriching: false,
         }))
       )
@@ -257,6 +277,15 @@ export default function WalkPage() {
           description: enrichments[idx]?.description,
           tip: enrichments[idx]?.tip,
           features: Array.isArray(enrichments[idx]?.features) ? enrichments[idx].features : undefined,
+          dogAllowed: enrichments[idx]?.dogAllowed,
+          leashRequired: enrichments[idx]?.leashRequired,
+          leashMaxLengthCm: enrichments[idx]?.leashMaxLengthCm,
+          pickupRequired: enrichments[idx]?.pickupRequired,
+          hazards: Array.isArray(enrichments[idx]?.hazards) ? enrichments[idx].hazards : undefined,
+          confidence: enrichments[idx]?.confidence,
+          sourceType: enrichments[idx]?.sourceType,
+          userConfirms: enrichments[idx]?.userConfirms,
+          userDisputes: enrichments[idx]?.userDisputes,
         }
       })
     } finally {
@@ -842,6 +871,26 @@ export default function WalkPage() {
                   ))}
                 </div>
               )}
+
+              {/* 🐶 반려견 규정 정보 (AI 추출) */}
+              {(selected.dogAllowed || selected.leashRequired != null || selected.pickupRequired != null || (selected.hazards && selected.hazards.length > 0)) && (
+                <DogRulesPanel trail={selected} onFeedback={async (type) => {
+                  // 낙관적 업데이트
+                  setSelected(prev => prev ? {
+                    ...prev,
+                    userConfirms: type === 'confirm' ? (prev.userConfirms ?? 0) + 1 : prev.userConfirms,
+                    userDisputes: type === 'dispute' ? (prev.userDisputes ?? 0) + 1 : prev.userDisputes,
+                  } : prev)
+                  try {
+                    await fetch('/api/walk/feedback', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ trail_id: selected.id, type }),
+                    })
+                  } catch {}
+                }} />
+              )}
+
               {/* 실시간 인원수 + 산책 시작/종료 */}
               <div className="mt-3 flex items-center gap-2 flex-wrap bg-white rounded-xl px-3 py-2 border border-[#d6e6ff]">
                 <Users size={14} className="text-[#3a7ab8]" />
