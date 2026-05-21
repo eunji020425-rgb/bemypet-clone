@@ -154,11 +154,6 @@ export default function Header() {
             <Link href="/chat" onClick={() => setMenuOpen(false)} className="px-5 py-3 hover:bg-[#f0f6ff] flex items-center gap-3">
               <span className="text-lg">💬</span> 실시간채팅
             </Link>
-            {user && (
-              <Link href="/community/write" onClick={() => setMenuOpen(false)} className="px-5 py-3 text-[#3a7ab8] font-bold hover:bg-[#f0f6ff] flex items-center gap-3">
-                <span className="text-lg">✎</span> 글쓰기
-              </Link>
-            )}
             {isAdmin && (
               <Link href="/admin" onClick={() => setMenuOpen(false)} className="px-5 py-3 text-[#a86570] font-semibold hover:bg-[#fdf2f4] flex items-center gap-3 border-t border-[#e6effc] mt-2 pt-3">
                 <Shield size={16} /> 관리자 페이지
