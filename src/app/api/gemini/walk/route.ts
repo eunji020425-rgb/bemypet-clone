@@ -157,7 +157,14 @@ JSON 배열만 반환.`
             text = result.response.text()
             if (text) break
           } catch (e: any) {
-            console.log(`[walk] ${modelName} failed: ${e?.message?.slice(0, 200)}`)
+            const msg = e?.message ?? ''
+            const isQuota = /429|quota|rate.?limit|exceeded/i.test(msg)
+            console.log(`[walk] ${modelName} failed: ${msg.slice(0, 200)}`)
+            if (isQuota) {
+              // quota는 프로젝트 단위 — 다른 모델 시도해도 똑같이 막힘. 즉시 중단.
+              console.log('[walk] quota hit — chain aborted')
+              break
+            }
             continue
           }
         }

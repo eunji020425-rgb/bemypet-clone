@@ -99,7 +99,13 @@ JSON 배열만 반환.`
             text = result.response.text()
             if (text) break
           } catch (e: any) {
-            console.log(`[hospital] ${modelName} failed: ${e?.message?.slice(0, 200)}`)
+            const msg = e?.message ?? ''
+            const isQuota = /429|quota|rate.?limit|exceeded/i.test(msg)
+            console.log(`[hospital] ${modelName} failed: ${msg.slice(0, 200)}`)
+            if (isQuota) {
+              console.log('[hospital] quota hit — chain aborted')
+              break
+            }
             continue
           }
         }

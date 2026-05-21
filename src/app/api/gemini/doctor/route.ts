@@ -67,7 +67,13 @@ export async function POST(request: Request) {
           },
         })
       } catch (e: any) {
-        console.log(`[doctor] ${modelName} failed: ${e?.message?.slice(0, 200)}`)
+        const msg = e?.message ?? ''
+        const isQuota = /429|quota|rate.?limit|exceeded/i.test(msg)
+        console.log(`[doctor] ${modelName} failed: ${msg.slice(0, 200)}`)
+        if (isQuota) {
+          console.log('[doctor] quota hit — chain aborted')
+          break
+        }
         continue
       }
     }

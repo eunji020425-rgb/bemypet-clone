@@ -127,7 +127,13 @@ ${needAnalysis.map((p: any, i: number) => `${i + 1}. ${p.name} [${p.categoryLabe
             text = result.response.text()
             if (text) break
           } catch (e: any) {
-            console.log(`[pet-places-enrich] ${modelName} failed: ${e?.message?.slice(0, 200)}`)
+            const msg = e?.message ?? ''
+            const isQuota = /429|quota|rate.?limit|exceeded/i.test(msg)
+            console.log(`[pet-places-enrich] ${modelName} failed: ${msg.slice(0, 200)}`)
+            if (isQuota) {
+              console.log('[pet-places-enrich] quota hit — chain aborted')
+              break
+            }
             continue
           }
         }
