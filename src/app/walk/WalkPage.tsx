@@ -130,6 +130,10 @@ export default function WalkPage() {
     setNavRoute(null)
     setArrivalState('far')
     setCrossings(null)
+    // 이 클릭이 user gesture라서 iOS 나침반 권한도 같이 요청 가능
+    if (compass.needsPermission) {
+      compass.requestPermission().catch(() => {})
+    }
     if (userPos) {
       try {
         const res = await fetch(
@@ -398,22 +402,22 @@ export default function WalkPage() {
       }
 
       const html = `
-        <div style="position:relative;width:60px;height:60px;pointer-events:none">
+        <div style="position:relative;width:64px;height:64px;pointer-events:none">
           ${heading != null ? `
-            <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(${heading}deg);width:60px;height:60px;display:flex;align-items:flex-start;justify-content:center">
-              <svg width="60" height="60" viewBox="0 0 60 60" style="overflow:visible">
+            <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(${heading}deg);width:64px;height:64px;display:flex;align-items:flex-start;justify-content:center">
+              <svg width="64" height="64" viewBox="0 0 64 64" style="overflow:visible;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35))">
                 <defs>
                   <linearGradient id="navConeGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-                    <stop offset="0%" stop-color="#2563eb" stop-opacity="0.6"/>
-                    <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
                   </linearGradient>
                 </defs>
-                <path d="M30 4 L48 38 L30 30 L12 38 Z" fill="url(#navConeGrad)" />
+                <path d="M32 2 L52 38 L32 30 L12 38 Z" fill="url(#navConeGrad)" stroke="#1e3a8a" stroke-width="1.5" stroke-linejoin="round" />
               </svg>
             </div>
           ` : ''}
-          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:rgba(37,99,235,0.18)"></div>
-          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 8px rgba(37,99,235,0.5)"></div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:rgba(37,99,235,0.18)"></div>
+          <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35)"></div>
         </div>`
 
       const icon = L.divIcon({ html, className: '', iconAnchor: [30, 30] })
