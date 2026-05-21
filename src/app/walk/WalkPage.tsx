@@ -367,8 +367,9 @@ export default function WalkPage() {
       })
       dstMarkerRef.current = L.marker(dst, { icon: flagIcon, zIndexOffset: 1000 }).addTo(map)
 
-      // 경로 전체가 보이도록 fit
-      map.fitBounds(navlineRef.current.getBounds(), { padding: [60, 60], maxZoom: 16 })
+      // 내 위치 중심으로 가깝게 줌인 (네이버 내비 스타일)
+      const me = userPos ?? navRoute.geometry[0]
+      map.setView([me[0], me[1]], 18, { animate: true })
     })()
 
     return () => { cancelled = true }
