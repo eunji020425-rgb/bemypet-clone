@@ -9,7 +9,7 @@ const TABS = [
   { href: '/map',       label: '지도',   Icon: Map,        match: (p: string) => p.startsWith('/map') },
   { href: '/walk',      label: '산책',   Icon: Footprints, match: (p: string) => p.startsWith('/walk') },
   { href: '/community', label: '커뮤니티', Icon: Users,    match: (p: string) => p.startsWith('/community') },
-  { href: '/chat',      label: 'MY',     Icon: User,       match: (p: string) => p.startsWith('/chat') || p.startsWith('/auth') },
+  { href: '/my',        label: 'MY',     Icon: User,       match: (p: string) => p.startsWith('/my') || p.startsWith('/auth') },
 ]
 
 export default function BottomNav() {
