@@ -76,7 +76,28 @@ export function useWalkPresence(
     }
   }, [])
 
-  const startWalking = useCallback(async (trail: TrailMeta) => {
+  /** 로그인 사용자의 미종료 세션을 DB에서 복구 (페이지 새로고침 후) */
+  const restoreActiveSession = useCallback(async () => {
+    if (!selfIsAuth || !selfId) return
+    const { data } = await supabase
+      .from('walk_sessions')
+      .select('id, trail_id, started_at')
+      .eq('user_id', selfId)
+      .is('ended_at', null)
+      .order('started_at', { ascending: false })
+      .limit(1)
+    const row = data?.[0]
+    if (row) {
+      setActiveTrail(row.trail_id)
+      setActiveSessionId(row.id)
+      sessionStartRef.current = new Date(row.started_at).getTime()
+    }
+  }, [selfId, selfIsAuth, supabase])
+
+  const startWalking = useCallback(async (
+    trail: TrailMeta,
+    currentCoords?: { lat: number; lng: number } | null,
+  ) => {
     if (!selfId) return
     // 이미 다른 곳에서 산책 중이면 먼저 종료
     if (activeTrail && activeTrail !== trail.id) {
@@ -85,7 +106,10 @@ export function useWalkPresence(
       if (selfIsAuth && activeSessionId) {
         const started = sessionStartRef.current ?? Date.now()
         const dur = Math.floor((Date.now() - started) / 1000)
-        await supabase.from('walk_sessions').update({ ended_at: new Date().toISOString(), duration_s: dur }).eq('id', activeSessionId)
+        await supabase.from('walk_sessions').update({
+          ended_at: new Date().toISOString(),
+          duration_s: dur,
+        }).eq('id', activeSessionId)
       }
     }
     const ch = channelsRef.current[trail.id]
@@ -95,6 +119,8 @@ export function useWalkPresence(
     sessionStartRef.current = Date.now()
     // DB 기록 (로그인 사용자만)
     if (selfIsAuth) {
+      const startLat = currentCoords?.lat ?? trail.lat ?? null
+      const startLng = currentCoords?.lng ?? trail.lng ?? null
       const { data } = await supabase
         .from('walk_sessions')
         .insert({
@@ -103,6 +129,8 @@ export function useWalkPresence(
           trail_name: trail.name ?? null,
           trail_lat: trail.lat ?? null,
           trail_lng: trail.lng ?? null,
+          start_lat: startLat,
+          start_lng: startLng,
         })
         .select('id')
         .single()
@@ -110,26 +138,55 @@ export function useWalkPresence(
     }
   }, [selfId, selfNick, activeTrail, activeSessionId, selfIsAuth, supabase])
 
-  const stopWalking = useCallback(async (distanceM: number = 0, path: [number, number][] = []) => {
-    if (!activeTrail) return
-    const ch = channelsRef.current[activeTrail]
+  const stopWalking = useCallback(async (
+    distanceM: number = 0,
+    path: [number, number][] = [],
+    currentCoords?: { lat: number; lng: number } | null,
+  ) => {
+    const ch = activeTrail ? channelsRef.current[activeTrail] : null
     if (ch) await ch.untrack()
-    if (selfIsAuth && activeSessionId) {
-      const started = sessionStartRef.current ?? Date.now()
-      const dur = Math.floor((Date.now() - started) / 1000)
-      await supabase.from('walk_sessions').update({
-        ended_at: new Date().toISOString(),
-        duration_s: dur,
-        distance_m: Math.round(distanceM),
-        path: path.length > 0 ? path : undefined,
-      }).eq('id', activeSessionId)
+    if (selfIsAuth) {
+      // 1) activeSessionId 있으면 그것 닫기
+      let sessionId = activeSessionId
+      // 2) 없으면 DB에서 미종료 세션 검색해서 fallback
+      if (!sessionId) {
+        const { data } = await supabase
+          .from('walk_sessions')
+          .select('id, started_at')
+          .eq('user_id', selfId)
+          .is('ended_at', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+        const row = data?.[0]
+        if (row) {
+          sessionId = row.id
+          if (sessionStartRef.current === null) {
+            sessionStartRef.current = new Date(row.started_at).getTime()
+          }
+        }
+      }
+      if (sessionId) {
+        const started = sessionStartRef.current ?? Date.now()
+        const dur = Math.max(1, Math.floor((Date.now() - started) / 1000))
+        const update: Record<string, unknown> = {
+          ended_at: new Date().toISOString(),
+          duration_s: dur,
+          distance_m: Math.round(distanceM),
+        }
+        if (path.length > 0) update.path = path
+        if (currentCoords) {
+          update.end_lat = currentCoords.lat
+          update.end_lng = currentCoords.lng
+        }
+        await supabase.from('walk_sessions').update(update).eq('id', sessionId)
+      }
     }
     setActiveTrail(null)
     setActiveSessionId(null)
     sessionStartRef.current = null
-  }, [activeTrail, activeSessionId, selfIsAuth, supabase])
+  }, [activeTrail, activeSessionId, selfIsAuth, selfId, supabase])
 
-  return { counts, activeTrail, activeSessionId, startWalking, stopWalking }
+  return { counts, activeTrail, activeSessionId, startWalking, stopWalking, restoreActiveSession }
 }
 
 /** 로그인 안 한 경우 브라우저 로컬 UUID 생성/재사용 */

@@ -38,6 +38,7 @@ export default async function WalkRoutePage() {
       .from('walk_sessions')
       .select('id, trail_name, trail_lat, trail_lng, started_at, ended_at, duration_s, distance_m')
       .eq('user_id', user.id)
+      .not('ended_at', 'is', null)   // 종료된 산책만 (진행중 숨김)
       .order('started_at', { ascending: false })
       .limit(5)
     recent = data ?? []

@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Footprints, Clock, TrendingUp } from 'lucide-react'
-import DeleteSessionButton from './DeleteSessionButton'
+import { Footprints, ArrowLeft } from 'lucide-react'
+import HistoryListClient from './HistoryListClient'
 
 interface Session {
   id: string
@@ -62,6 +62,7 @@ export default async function WalkHistoryPage() {
     .from('walk_sessions')
     .select('*')
     .eq('user_id', user.id)
+    .not('ended_at', 'is', null)   // 종료된 산책만 노출 (진행중 미표시)
     .order('started_at', { ascending: false })
     .limit(50)
 
@@ -123,72 +124,7 @@ export default async function WalkHistoryPage() {
       </div>
 
       {/* 이력 리스트 */}
-      {list.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-[#d6e6ff] rounded-2xl">
-          <Footprints className="mx-auto text-[#d6e6ff] mb-3" size={40} />
-          <p className="text-sm text-[#6a7c95]">아직 산책 기록이 없어요</p>
-          <Link href="/walk" className="inline-block mt-3 text-xs text-[#3a7ab8] font-bold hover:underline">
-            지금 산책 시작하기 →
-          </Link>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {list.map(s => {
-            const isActive = !s.ended_at
-            return (
-              <div key={s.id} className="relative">
-                <div className="absolute top-2 right-2 z-10">
-                  <DeleteSessionButton sessionId={s.id} />
-                </div>
-              <Link
-                href={`/walk/history/${s.id}`}
-                className={`block bg-white rounded-xl p-4 border hover:shadow-md transition-shadow ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#22c55e]' : 'bg-[#d6e6ff]'}`}>
-                    <Footprints size={16} className={isActive ? 'text-white' : 'text-[#3a7ab8]'} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-[#2a3a55] truncate flex-1">
-                        {s.trail_name ?? '산책로'}
-                      </p>
-                      {isActive && (
-                        <span className="flex items-center gap-1 text-xs bg-[#22c55e] text-white px-2 py-0.5 rounded-full font-bold">
-                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                          진행중
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-[#6a7c95] flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Clock size={11} /> {formatDate(s.started_at)}
-                      </span>
-                      {!isActive && (
-                        <span className="flex items-center gap-1 text-[#3a7ab8] font-bold">
-                          <TrendingUp size={11} /> {formatDuration(s.duration_s)}
-                        </span>
-                      )}
-                      {!isActive && s.distance_m != null && s.distance_m > 0 && (
-                        <span className="flex items-center gap-1 text-[#22c55e] font-bold">
-                          📏 {formatDistance(s.distance_m)}
-                        </span>
-                      )}
-                      {!isActive && Array.isArray(s.path) && s.path.length >= 2 && (
-                        <span className="text-[#6a7c95]">
-                          🗺 경로 {s.path.length}점
-                        </span>
-                      )}
-                      <span className="text-[#3a7ab8] ml-auto">자세히 →</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-              </div>
-            )
-          })}
-        </div>
-      )}
+      <HistoryListClient sessions={list} />
     </div>
   )
 }

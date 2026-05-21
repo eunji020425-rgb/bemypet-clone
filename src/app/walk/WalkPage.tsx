@@ -145,12 +145,20 @@ export default function WalkPage() {
 
   // 화면에 보이는 산책로 ID들 (메모이즈)
   const trailIds = useMemo(() => trails.map(t => t.id), [trails])
-  const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick, selfIsAuth)
+  const { counts, activeTrail, startWalking, stopWalking, restoreActiveSession } = useWalkPresence(trailIds, selfId, selfNick, selfIsAuth)
+
+  // 로그인 + selfId 준비되면 → 미종료 세션 자동 복구 (새로고침 후 산책 종료 가능하게)
+  useEffect(() => {
+    if (selfIsAuth && selfId) {
+      restoreActiveSession()
+    }
+  }, [selfIsAuth, selfId, restoreActiveSession])
   const tracker = useWalkTracker(!!activeTrail)
   const compass = useCompass(!!activeTrail)
 
   const startWalkingFor = async (t: Trail) => {
-    await startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
+    const cur = tracker.coords ?? (userPos ? { lat: userPos[0], lng: userPos[1] } : null)
+    await startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng }, cur)
     setNavRoute(null)
     setArrivalState('far')
     setCrossings(null)
@@ -186,7 +194,8 @@ export default function WalkPage() {
     setNavRoute(null)
     setArrivalState('far')
     setCrossings(null)
-    await stopWalking(tracker.distance, tracker.path)
+    const cur = tracker.coords ?? (userPos ? { lat: userPos[0], lng: userPos[1] } : null)
+    await stopWalking(tracker.distance, tracker.path, cur)
     // 다녀온 곳 목록 즉시 갱신
     router.refresh()
   }

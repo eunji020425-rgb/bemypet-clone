@@ -86,23 +86,18 @@ export default function RecentWalks({ isLoggedIn, sessions }: { isLoggedIn: bool
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {sessions.map(s => {
-            // ended_at 없어도 시작한 지 30분 넘었으면 진행중으로 안 표시 (방어)
-            const startedMs = new Date(s.started_at).getTime()
-            const STALE_MS = 30 * 60 * 1000
-            const isActive = !s.ended_at && (Date.now() - startedMs) < STALE_MS
-            return (
-              <div key={s.id} className="relative">
-                <div className="absolute top-1 right-1 z-10">
-                  <DeleteSessionButton sessionId={s.id} />
-                </div>
+          {sessions.map(s => (
+            <div key={s.id} className="relative">
+              <div className="absolute top-1 right-1 z-10">
+                <DeleteSessionButton sessionId={s.id} />
+              </div>
               <Link
                 href={`/walk/history/${s.id}`}
-                className={`block bg-white rounded-xl p-4 border hover:shadow-md transition-shadow ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
+                className="block bg-white rounded-xl p-4 border border-[#d6e6ff] hover:border-[#3a7ab8] hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start gap-2 mb-2">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#22c55e]' : 'bg-[#d6e6ff]'}`}>
-                    <Footprints size={14} className={isActive ? 'text-white' : 'text-[#3a7ab8]'} />
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-[#d6e6ff]">
+                    <Footprints size={14} className="text-[#3a7ab8]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#2a3a55] truncate">
@@ -112,23 +107,14 @@ export default function RecentWalks({ isLoggedIn, sessions }: { isLoggedIn: bool
                       <Clock size={10} /> {formatDate(s.started_at)}
                     </p>
                   </div>
-                  {isActive && (
-                    <span className="flex items-center gap-1 text-[10px] bg-[#22c55e] text-white px-1.5 py-0.5 rounded-full font-bold flex-shrink-0">
-                      <span className="w-1 h-1 bg-white rounded-full animate-pulse" />
-                      진행중
-                    </span>
-                  )}
                 </div>
-                {!isActive && (
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-[#22c55e] font-bold">📏 {formatDistance(s.distance_m)}</span>
-                    <span className="text-[#3a7ab8] font-bold">⏱ {formatDuration(s.duration_s)}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-[#22c55e] font-bold">📏 {formatDistance(s.distance_m)}</span>
+                  <span className="text-[#3a7ab8] font-bold">⏱ {formatDuration(s.duration_s)}</span>
+                </div>
               </Link>
-              </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       )}
     </section>
