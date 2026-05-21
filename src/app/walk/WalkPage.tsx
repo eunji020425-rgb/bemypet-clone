@@ -86,7 +86,7 @@ export default function WalkPage() {
   const [navRoute, setNavRoute] = useState<{ distance: number; duration: number; geometry: [number, number][] } | null>(null)
   const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
   const [crossings, setCrossings] = useState<number | null>(null)
-  const [diffFilter, setDiffFilter] = useState<'전체' | '쉬움' | '보통' | '어려움' | '미분석'>('전체')
+  const [diffFilter, setDiffFilter] = useState<'전체' | '쉬움' | '보통' | '어려움'>('전체')
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -235,7 +235,8 @@ export default function WalkPage() {
       setTrails(prev =>
         prev.map((t, i) => ({
           ...t,
-          difficulty: enrichments[i]?.difficulty,
+          // AI가 분석 못한 항목은 기본 '보통' 유지
+          difficulty: enrichments[i]?.difficulty ?? t.difficulty ?? '보통',
           popularity: enrichments[i]?.popularity,
           length: enrichments[i]?.length,
           description: enrichments[i]?.description,
@@ -276,7 +277,8 @@ export default function WalkPage() {
         body: JSON.stringify({ lat, lng, rect }),
       })
       const data = await res.json()
-      const parks: Trail[] = (data.parks || []).map((p: Trail) => ({ ...p, enriching: true }))
+      // AI 분석 전까지는 일단 '보통'으로 임시 분류 (미분석 카테고리 없애기 위해)
+      const parks: Trail[] = (data.parks || []).map((p: Trail) => ({ ...p, difficulty: '보통', enriching: true }))
       setTrails(parks)
       await initMap(lat, lng, parks)
       setLoading(false)
@@ -666,15 +668,13 @@ export default function WalkPage() {
               '쉬움': trails.filter(t => t.difficulty === '쉬움').length,
               '보통': trails.filter(t => t.difficulty === '보통').length,
               '어려움': trails.filter(t => t.difficulty === '어려움').length,
-              '미분석': trails.filter(t => !t.difficulty).length,
             }
-            const TABS: Array<keyof typeof counts> = ['전체', '쉬움', '보통', '어려움', '미분석']
+            const TABS: Array<keyof typeof counts> = ['전체', '쉬움', '보통', '어려움']
             const COLOR: Record<string, string> = {
               '전체':   'bg-[#3a7ab8] text-white',
               '쉬움':   'bg-green-500 text-white',
               '보통':   'bg-yellow-500 text-white',
               '어려움': 'bg-red-500 text-white',
-              '미분석': 'bg-gray-400 text-white',
             }
             return (
               <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
@@ -707,7 +707,7 @@ export default function WalkPage() {
           <p className="text-xs text-[#aaa] px-1 pb-1">
             {diffFilter === '전체'
               ? `총 ${trails.length}개의 산책로`
-              : `${diffFilter} ${trails.filter(t => diffFilter === '미분석' ? !t.difficulty : t.difficulty === diffFilter).length}개`}
+              : `${diffFilter} ${trails.filter(t => t.difficulty === diffFilter).length}개`}
           </p>
           {loading && trails.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">
@@ -722,7 +722,6 @@ export default function WalkPage() {
             .map((t, i) => ({ t, i }))
             .filter(({ t }) => {
               if (diffFilter === '전체') return true
-              if (diffFilter === '미분석') return !t.difficulty
               return t.difficulty === diffFilter
             })
             .map(({ t, i }) => {
