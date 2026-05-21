@@ -80,6 +80,10 @@ function SignupContent() {
       provider: 'google',
       options: {
         redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        },
       },
     })
     if (error) {

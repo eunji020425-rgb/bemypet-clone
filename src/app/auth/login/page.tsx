@@ -61,6 +61,11 @@ function LoginContent() {
       provider: 'google',
       options: {
         redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        queryParams: {
+          // 매번 구글 계정 선택 화면을 강제로 띄움 → 다른 사람이 본인 계정으로 자동 로그인 못 함
+          prompt: 'select_account',
+          access_type: 'offline',
+        },
       },
     })
     if (error) {
