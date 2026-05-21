@@ -11,14 +11,24 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
  * - "산책 시작" 토글: 해당 채널에 본인을 track → 다른 사용자에게 카운트 +1
  * - DB 쓰기 없음. 휘발성. 앱 닫으면 자동 -1.
  */
+export interface TrailMeta {
+  id: string
+  name?: string
+  lat?: number
+  lng?: number
+}
+
 export function useWalkPresence(
   trailIds: string[],
   selfId: string,
   selfNick: string,
+  selfIsAuth: boolean = false,
 ) {
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [activeTrail, setActiveTrail] = useState<string | null>(null)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const channelsRef = useRef<Record<string, RealtimeChannel>>({})
+  const sessionStartRef = useRef<number | null>(null)
   const supabase = createClient()
 
   // 표시 대상이 바뀔 때 채널 구독 동기화
@@ -66,27 +76,55 @@ export function useWalkPresence(
     }
   }, [])
 
-  const startWalking = useCallback(async (trailId: string) => {
+  const startWalking = useCallback(async (trail: TrailMeta) => {
     if (!selfId) return
-    // 이미 다른 곳에서 산책 중이면 먼저 untrack
-    if (activeTrail && activeTrail !== trailId) {
+    // 이미 다른 곳에서 산책 중이면 먼저 종료
+    if (activeTrail && activeTrail !== trail.id) {
       const prev = channelsRef.current[activeTrail]
       if (prev) await prev.untrack()
+      if (selfIsAuth && activeSessionId) {
+        const started = sessionStartRef.current ?? Date.now()
+        const dur = Math.floor((Date.now() - started) / 1000)
+        await supabase.from('walk_sessions').update({ ended_at: new Date().toISOString(), duration_s: dur }).eq('id', activeSessionId)
+      }
     }
-    const ch = channelsRef.current[trailId]
+    const ch = channelsRef.current[trail.id]
     if (!ch) return
     await ch.track({ user_id: selfId, nickname: selfNick, joined_at: Date.now() })
-    setActiveTrail(trailId)
-  }, [selfId, selfNick, activeTrail])
+    setActiveTrail(trail.id)
+    sessionStartRef.current = Date.now()
+    // DB 기록 (로그인 사용자만)
+    if (selfIsAuth) {
+      const { data } = await supabase
+        .from('walk_sessions')
+        .insert({
+          user_id: selfId,
+          trail_id: trail.id,
+          trail_name: trail.name ?? null,
+          trail_lat: trail.lat ?? null,
+          trail_lng: trail.lng ?? null,
+        })
+        .select('id')
+        .single()
+      if (data?.id) setActiveSessionId(data.id)
+    }
+  }, [selfId, selfNick, activeTrail, activeSessionId, selfIsAuth, supabase])
 
   const stopWalking = useCallback(async () => {
     if (!activeTrail) return
     const ch = channelsRef.current[activeTrail]
     if (ch) await ch.untrack()
+    if (selfIsAuth && activeSessionId) {
+      const started = sessionStartRef.current ?? Date.now()
+      const dur = Math.floor((Date.now() - started) / 1000)
+      await supabase.from('walk_sessions').update({ ended_at: new Date().toISOString(), duration_s: dur }).eq('id', activeSessionId)
+    }
     setActiveTrail(null)
-  }, [activeTrail])
+    setActiveSessionId(null)
+    sessionStartRef.current = null
+  }, [activeTrail, activeSessionId, selfIsAuth, supabase])
 
-  return { counts, activeTrail, startWalking, stopWalking }
+  return { counts, activeTrail, activeSessionId, startWalking, stopWalking }
 }
 
 /** 로그인 안 한 경우 브라우저 로컬 UUID 생성/재사용 */

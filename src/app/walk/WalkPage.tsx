@@ -79,6 +79,7 @@ export default function WalkPage() {
   const [showResearchBtn, setShowResearchBtn] = useState(false)
   const [selfId, setSelfId] = useState<string>('')
   const [selfNick, setSelfNick] = useState<string>('산책러')
+  const [selfIsAuth, setSelfIsAuth] = useState(false)
 
   // 로그인 사용자 또는 익명 ID 확보
   useEffect(() => {
@@ -86,6 +87,7 @@ export default function WalkPage() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setSelfId(data.user.id)
+        setSelfIsAuth(true)
         setSelfNick(
           (data.user.user_metadata?.nickname as string) ||
           (data.user.user_metadata?.name as string) ||
@@ -94,13 +96,16 @@ export default function WalkPage() {
         )
       } else {
         setSelfId(getOrCreateAnonId())
+        setSelfIsAuth(false)
       }
     })
   }, [])
 
   // 화면에 보이는 산책로 ID들 (메모이즈)
   const trailIds = useMemo(() => trails.map(t => t.id), [trails])
-  const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick)
+  const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick, selfIsAuth)
+
+  const startWalkingFor = (t: Trail) => startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
 
   const initMap = async (lat: number, lng: number, items: Trail[]) => {
     if (typeof window === 'undefined') return
@@ -417,7 +422,7 @@ export default function WalkPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={(e) => { e.stopPropagation(); startWalking(t.id) }}
+                          onClick={(e) => { e.stopPropagation(); startWalkingFor(t) }}
                           disabled={!selfId}
                           className="bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition"
                         >
@@ -512,7 +517,7 @@ export default function WalkPage() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => startWalking(selected.id)}
+                    onClick={() => startWalkingFor(selected)}
                     disabled={!selfId}
                     className="bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 transition"
                   >
