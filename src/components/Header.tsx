@@ -108,10 +108,6 @@ export default function Header() {
         <aside
           className="fixed top-0 left-0 bottom-0 w-72 max-w-[80vw] bg-white shadow-2xl flex flex-col"
           style={{ zIndex: 9999, animation: 'slideInLeft 0.25s ease-out', paddingTop: 'env(safe-area-inset-top)' }}
-          style={{
-            paddingTop: 'env(safe-area-inset-top)',
-            animation: 'slideInLeft 0.25s ease-out',
-          }}
         >
           {/* 드로어 헤더 */}
           <div className="h-12 px-4 flex items-center justify-between border-b border-[#e6effc]">
