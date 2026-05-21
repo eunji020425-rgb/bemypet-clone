@@ -9,10 +9,13 @@ import { useEffect, useRef, useState } from 'react'
  * - jitter 필터: 5m 미만은 무시, 정확도 50m 초과 좌표는 무시
  * - 산책 중일 때만 활성, 종료 시 watch 해제
  */
+export type PathPoint = [number, number]  // [lat, lng]
+
 export function useWalkTracker(active: boolean) {
   const [distance, setDistance] = useState(0)      // m
   const [duration, setDuration] = useState(0)      // s
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [path, setPath] = useState<PathPoint[]>([])
 
   const watchIdRef = useRef<number | null>(null)
   const lastPosRef = useRef<{ lat: number; lng: number } | null>(null)
@@ -35,6 +38,7 @@ export function useWalkTracker(active: boolean) {
       setDistance(0)
       setDuration(0)
       setCoords(null)
+      setPath([])
       return
     }
 
@@ -62,10 +66,12 @@ export function useWalkTracker(active: boolean) {
           if (d >= 5 && d < 200) {
             // 5m~200m 사이의 합리적 이동만 거리에 더함 (GPS 점프 방지)
             setDistance(prev => prev + d)
+            setPath(prev => [...prev, [latitude, longitude]])
             lastPosRef.current = { lat: latitude, lng: longitude }
           }
         } else {
           lastPosRef.current = { lat: latitude, lng: longitude }
+          setPath([[latitude, longitude]])  // 시작점
         }
       },
       (err) => {
@@ -86,7 +92,7 @@ export function useWalkTracker(active: boolean) {
     }
   }, [active])
 
-  return { distance, duration, coords }
+  return { distance, duration, coords, path }
 }
 
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {

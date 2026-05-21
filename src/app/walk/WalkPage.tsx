@@ -68,6 +68,7 @@ export default function WalkPage() {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
+  const polylineRef = useRef<any>(null)
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -108,7 +109,7 @@ export default function WalkPage() {
   const tracker = useWalkTracker(!!activeTrail)
 
   const startWalkingFor = (t: Trail) => startWalking({ id: t.id, name: t.name, lat: t.lat, lng: t.lng })
-  const stopWalkingWithDistance = () => stopWalking(tracker.distance)
+  const stopWalkingWithData = () => stopWalking(tracker.distance, tracker.path)
 
   const initMap = async (lat: number, lng: number, items: Trail[]) => {
     if (typeof window === 'undefined') return
@@ -276,6 +277,54 @@ export default function WalkPage() {
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
 
+  // 산책 경로 실시간 polyline
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!mapInstanceRef.current) return
+    let cancelled = false
+    ;(async () => {
+      const L = (await import('leaflet')).default
+      if (cancelled) return
+      const map = mapInstanceRef.current
+      if (!map) return
+
+      // 경로가 비어있으면 polyline 제거
+      if (!tracker.path || tracker.path.length < 2) {
+        if (polylineRef.current) {
+          polylineRef.current.remove()
+          polylineRef.current = null
+        }
+        return
+      }
+
+      if (polylineRef.current) {
+        polylineRef.current.setLatLngs(tracker.path)
+      } else {
+        polylineRef.current = L.polyline(tracker.path, {
+          color: '#3a7ab8',
+          weight: 5,
+          opacity: 0.85,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(map)
+      }
+
+      // 산책 중일 때 지도가 사용자 위치 따라가도록 (옵션)
+      if (activeTrail && tracker.coords) {
+        map.panTo([tracker.coords.lat, tracker.coords.lng], { animate: true, duration: 0.5 })
+      }
+    })()
+    return () => { cancelled = true }
+  }, [tracker.path, tracker.coords, activeTrail])
+
+  // 산책 종료 시 polyline 정리
+  useEffect(() => {
+    if (!activeTrail && polylineRef.current) {
+      polylineRef.current.remove()
+      polylineRef.current = null
+    }
+  }, [activeTrail])
+
   // 인원수 변동 → 마커 아이콘 갱신
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -336,7 +385,7 @@ export default function WalkPage() {
               <span className="truncate">🐾 산책 중 — {trails.find(t => t.id === activeTrail)?.name ?? '산책로'}</span>
             </span>
             <button
-              onClick={stopWalkingWithDistance}
+              onClick={stopWalkingWithData}
               className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full transition flex-shrink-0"
             >
               산책 종료
@@ -430,7 +479,7 @@ export default function WalkPage() {
                     <div className="flex items-center gap-2 mt-2">
                       {activeTrail === t.id ? (
                         <button
-                          onClick={(e) => { e.stopPropagation(); stopWalkingWithDistance() }}
+                          onClick={(e) => { e.stopPropagation(); stopWalkingWithData() }}
                           className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition"
                         >
                           <Footprints size={11} /> 산책 종료
@@ -525,7 +574,7 @@ export default function WalkPage() {
                 <span className="flex-1" />
                 {activeTrail === selected.id ? (
                   <button
-                    onClick={stopWalkingWithDistance}
+                    onClick={stopWalkingWithData}
                     className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 transition"
                   >
                     <Footprints size={12} /> 산책 종료

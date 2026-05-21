@@ -110,7 +110,7 @@ export function useWalkPresence(
     }
   }, [selfId, selfNick, activeTrail, activeSessionId, selfIsAuth, supabase])
 
-  const stopWalking = useCallback(async (distanceM: number = 0) => {
+  const stopWalking = useCallback(async (distanceM: number = 0, path: [number, number][] = []) => {
     if (!activeTrail) return
     const ch = channelsRef.current[activeTrail]
     if (ch) await ch.untrack()
@@ -121,6 +121,7 @@ export function useWalkPresence(
         ended_at: new Date().toISOString(),
         duration_s: dur,
         distance_m: Math.round(distanceM),
+        path: path.length > 0 ? path : undefined,
       }).eq('id', activeSessionId)
     }
     setActiveTrail(null)

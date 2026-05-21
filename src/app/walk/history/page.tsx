@@ -13,6 +13,7 @@ interface Session {
   ended_at: string | null
   duration_s: number | null
   distance_m: number | null
+  path: [number, number][] | null
 }
 
 function formatDistance(m: number | null | undefined): string {
@@ -166,6 +167,11 @@ export default async function WalkHistoryPage() {
                       {!isActive && s.distance_m != null && s.distance_m > 0 && (
                         <span className="flex items-center gap-1 text-[#22c55e] font-bold">
                           📏 {formatDistance(s.distance_m)}
+                        </span>
+                      )}
+                      {!isActive && Array.isArray(s.path) && s.path.length >= 2 && (
+                        <span className="text-[#6a7c95]">
+                          🗺 경로 {s.path.length}점
                         </span>
                       )}
                       {s.trail_lat && s.trail_lng && (
