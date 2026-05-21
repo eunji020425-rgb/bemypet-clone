@@ -11,6 +11,29 @@ export default async function WalkRoutePage() {
 
   let recent: any[] = []
   if (user) {
+    // 30분 이상 미종료 상태인 내 세션은 자동으로 닫기 (브라우저 닫고 가서 방치된 것들)
+    const STALE_MIN = 30
+    const cutoff = new Date(Date.now() - STALE_MIN * 60 * 1000).toISOString()
+    const { data: stale } = await supabase
+      .from('walk_sessions')
+      .select('id, started_at')
+      .eq('user_id', user.id)
+      .is('ended_at', null)
+      .lt('started_at', cutoff)
+
+    if (stale && stale.length > 0) {
+      // 한 번에 모두 종료 처리 (duration_s = 종료시각 - 시작시각, 최대 30분으로 캡)
+      const updates = stale.map(s => {
+        const startedMs = new Date(s.started_at).getTime()
+        const dur = Math.min(Math.floor((Date.now() - startedMs) / 1000), STALE_MIN * 60)
+        return supabase
+          .from('walk_sessions')
+          .update({ ended_at: new Date().toISOString(), duration_s: dur })
+          .eq('id', s.id)
+      })
+      await Promise.all(updates)
+    }
+
     const { data } = await supabase
       .from('walk_sessions')
       .select('id, trail_name, trail_lat, trail_lng, started_at, ended_at, duration_s, distance_m')

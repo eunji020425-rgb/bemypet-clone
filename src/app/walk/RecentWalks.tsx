@@ -86,7 +86,10 @@ export default function RecentWalks({ isLoggedIn, sessions }: { isLoggedIn: bool
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {sessions.map(s => {
-            const isActive = !s.ended_at
+            // ended_at 없어도 시작한 지 30분 넘었으면 진행중으로 안 표시 (방어)
+            const startedMs = new Date(s.started_at).getTime()
+            const STALE_MS = 30 * 60 * 1000
+            const isActive = !s.ended_at && (Date.now() - startedMs) < STALE_MS
             return (
               <Link
                 key={s.id}

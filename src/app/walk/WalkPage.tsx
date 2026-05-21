@@ -86,6 +86,7 @@ export default function WalkPage() {
   const [navRoute, setNavRoute] = useState<{ distance: number; duration: number; geometry: [number, number][] } | null>(null)
   const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
   const [crossings, setCrossings] = useState<number | null>(null)
+  const [diffFilter, setDiffFilter] = useState<'전체' | '쉬움' | '보통' | '어려움' | '미분석'>('전체')
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -659,7 +660,52 @@ export default function WalkPage() {
         </div>
 
         <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '420px' }}>
-          <p className="text-xs text-[#aaa] px-1 pb-1">총 {trails.length}개의 산책로 추천</p>
+          {/* 난이도 필터 탭 */}
+          {trails.length > 0 && (() => {
+            const counts = {
+              '전체': trails.length,
+              '쉬움': trails.filter(t => t.difficulty === '쉬움').length,
+              '보통': trails.filter(t => t.difficulty === '보통').length,
+              '어려움': trails.filter(t => t.difficulty === '어려움').length,
+              '미분석': trails.filter(t => !t.difficulty).length,
+            }
+            const TABS: Array<keyof typeof counts> = ['전체', '쉬움', '보통', '어려움', '미분석']
+            const COLOR: Record<string, string> = {
+              '전체':   'bg-[#3a7ab8] text-white',
+              '쉬움':   'bg-green-500 text-white',
+              '보통':   'bg-yellow-500 text-white',
+              '어려움': 'bg-red-500 text-white',
+              '미분석': 'bg-gray-400 text-white',
+            }
+            return (
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                {TABS.map(t => {
+                  const active = diffFilter === t
+                  const c = counts[t]
+                  if (c === 0 && t !== '전체') return null
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setDiffFilter(t as any)}
+                      className={`flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition border ${
+                        active
+                          ? COLOR[t] + ' border-transparent shadow-sm'
+                          : 'bg-white text-[#6a7c95] border-[#d6e6ff] hover:border-[#3a7ab8]'
+                      }`}
+                    >
+                      {t} <span className={active ? 'opacity-80' : 'text-[#94a3b8]'}>{c}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })()}
+
+          <p className="text-xs text-[#aaa] px-1 pb-1">
+            {diffFilter === '전체'
+              ? `총 ${trails.length}개의 산책로`
+              : `${diffFilter} ${trails.filter(t => diffFilter === '미분석' ? !t.difficulty : t.difficulty === diffFilter).length}개`}
+          </p>
           {loading && trails.length === 0 && (
             <div className="text-center py-10 text-[#aaa] text-sm">
               <div className="text-3xl mb-2 animate-bounce">🐾</div>
@@ -669,7 +715,14 @@ export default function WalkPage() {
           {!loading && trails.length === 0 && !error && (
             <div className="text-center py-10 text-[#aaa] text-sm">위치를 기반으로 산책로를 추천받으세요!</div>
           )}
-          {trails.map((t, i) => {
+          {trails
+            .map((t, i) => ({ t, i }))
+            .filter(({ t }) => {
+              if (diffFilter === '전체') return true
+              if (diffFilter === '미분석') return !t.difficulty
+              return t.difficulty === diffFilter
+            })
+            .map(({ t, i }) => {
             const isSelected = selected?.id === t.id
             return (
               <div
