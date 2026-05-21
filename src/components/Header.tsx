@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { Menu, X, Stethoscope, Map as MapIcon, Shield, Footprints } from 'lucide-react'
+import { Menu, X, Map as MapIcon, Shield, Footprints } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -54,11 +54,9 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#2a3a55]">
           <Link href="/map" className="hover:text-[#3a7ab8] transition-colors flex items-center gap-1.5 text-[#3a7ab8] font-semibold"><MapIcon size={14}/>지도</Link>
           <Link href="/walk" className="hover:text-[#3a7ab8] transition-colors flex items-center gap-1.5"><Footprints size={14}/>산책</Link>
-          <Link href="/walk/history" className="hover:text-[#3a7ab8] transition-colors text-xs">내 이력</Link>
           <Link href="/" className="hover:text-[#3a7ab8] transition-colors">홈</Link>
           <Link href="/community" className="hover:text-[#3a7ab8] transition-colors">커뮤니티</Link>
           <Link href="/chat" className="hover:text-[#3a7ab8] transition-colors">실시간채팅</Link>
-          <Link href="/ai-doctor" className="hover:text-[#3a7ab8] transition-colors flex items-center gap-1.5"><Stethoscope size={14}/>AI닥터</Link>
           {isAdmin && (
             <Link href="/admin" className="text-[#a86570] hover:text-[#a86570]/80 transition-colors flex items-center gap-1.5 font-semibold">
               <Shield size={14}/>관리자
@@ -97,11 +95,9 @@ export default function Header() {
         <div className="md:hidden backdrop-blur-xl bg-white/80 border-t border-white/50 px-5 py-4 flex flex-col gap-4 text-sm font-medium text-[#2a3a55]">
           <Link href="/map" onClick={() => setMenuOpen(false)} className="text-[#3a7ab8] font-semibold">🗺️ 통합 지도</Link>
           <Link href="/walk" onClick={() => setMenuOpen(false)}>🐾 산책</Link>
-          <Link href="/walk/history" onClick={() => setMenuOpen(false)}>📈 내 산책 이력</Link>
           <Link href="/" onClick={() => setMenuOpen(false)}>홈</Link>
           <Link href="/community" onClick={() => setMenuOpen(false)}>커뮤니티</Link>
           <Link href="/chat" onClick={() => setMenuOpen(false)}>실시간채팅</Link>
-          <Link href="/ai-doctor" onClick={() => setMenuOpen(false)}>AI닥터</Link>
           {isAdmin && (
             <Link href="/admin" onClick={() => setMenuOpen(false)} className="text-[#a86570] font-semibold">
               🛡️ 관리자 페이지

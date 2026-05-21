@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MessageCircle, PenSquare, Users, Map as MapIcon, Stethoscope, Footprints } from 'lucide-react'
+import { MessageCircle, Users, Map as MapIcon, Footprints } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -58,14 +58,6 @@ export default function HomePage() {
                 <MessageCircle size={22} className="text-[#3a7ab8]" />
               </div>
               <span className="text-xs text-[#2a3a55] font-medium">실시간채팅</span>
-            </div>
-          </Link>
-          <Link href="/ai-doctor" className="group">
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-14 h-14 rounded-full bg-[#f0f6ff] flex items-center justify-center group-hover:scale-105 transition-transform border border-[#d6e6ff]">
-                <Stethoscope size={22} className="text-[#3a7ab8]" />
-              </div>
-              <span className="text-xs text-[#2a3a55] font-medium">AI닥터</span>
             </div>
           </Link>
         </div>
