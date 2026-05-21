@@ -58,9 +58,24 @@ ALTER TABLE public.posts          ADD COLUMN IF NOT EXISTS likes_count INTEGER D
 ALTER TABLE public.posts          ADD COLUMN IF NOT EXISTS comments_count INTEGER DEFAULT 0;
 ALTER TABLE public.posts          ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE public.profiles       ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.profiles       ADD COLUMN IF NOT EXISTS nickname TEXT;
 ALTER TABLE public.profiles       ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE public.profiles       ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.profiles       ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+-- 기존 다른 컬럼 (username/display_name)에서 nickname으로 복사 (값 비어있을 때만)
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='profiles' AND column_name='display_name') THEN
+    UPDATE public.profiles SET nickname = display_name WHERE nickname IS NULL AND display_name IS NOT NULL;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='profiles' AND column_name='username') THEN
+    UPDATE public.profiles SET nickname = username WHERE nickname IS NULL AND username IS NOT NULL;
+  END IF;
+END $$;
+
+UPDATE public.profiles SET nickname = '익명' WHERE nickname IS NULL;
 ALTER TABLE public.comments       ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.comments       ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE public.chat_messages  ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN DEFAULT FALSE;
