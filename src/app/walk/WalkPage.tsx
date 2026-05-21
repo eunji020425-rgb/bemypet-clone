@@ -69,6 +69,8 @@ export default function WalkPage() {
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
   const polylineRef = useRef<any>(null)
+  const guidelineRef = useRef<any>(null)
+  const [guideRoute, setGuideRoute] = useState<{ distance: number; duration: number } | null>(null)
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -276,6 +278,50 @@ export default function WalkPage() {
     locate()
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
+
+  // 선택된 산책로로 가는 도보 가이드 경로 (OSRM)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!mapInstanceRef.current) return
+    let cancelled = false
+
+    ;(async () => {
+      // 이전 가이드라인 제거
+      if (guidelineRef.current) {
+        guidelineRef.current.remove()
+        guidelineRef.current = null
+      }
+      setGuideRoute(null)
+
+      if (!selected || !userPos) return
+      // 너무 멀면 가이드 안 그림 (5km 초과)
+      if (selected.distance > 5) return
+
+      try {
+        const res = await fetch(
+          `/api/route?mode=foot&srcLat=${userPos[0]}&srcLng=${userPos[1]}&dstLat=${selected.lat}&dstLng=${selected.lng}`
+        )
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled || !data?.geometry) return
+
+        const L = (await import('leaflet')).default
+        const map = mapInstanceRef.current
+        if (!map) return
+
+        guidelineRef.current = L.polyline(data.geometry, {
+          color: '#94a3b8',
+          weight: 4,
+          opacity: 0.7,
+          dashArray: '10, 8',
+        }).addTo(map)
+
+        setGuideRoute({ distance: data.distance, duration: data.duration })
+      } catch {}
+    })()
+
+    return () => { cancelled = true }
+  }, [selected, userPos])
 
   // 산책 경로 실시간 polyline
   useEffect(() => {
@@ -565,6 +611,17 @@ export default function WalkPage() {
                   ))}
                 </div>
               )}
+              {/* 도보 가이드 거리/시간 */}
+              {guideRoute && (
+                <div className="mt-3 flex items-center gap-3 bg-[#f0f6ff] rounded-xl px-3 py-2 border border-[#d6e6ff] text-xs">
+                  <span className="text-[#3a7ab8] font-bold">📍 여기서 가는 길</span>
+                  <span className="text-[#2a3a55]">
+                    걸어서 <strong>{Math.round(guideRoute.distance)}m</strong> · 약 <strong>{Math.round(guideRoute.duration / 60)}분</strong>
+                  </span>
+                  <span className="text-[#6a7c95] ml-auto">지도에 점선 ⊿</span>
+                </div>
+              )}
+
               {/* 실시간 인원수 + 산책 시작/종료 */}
               <div className="mt-3 flex items-center gap-2 flex-wrap bg-white rounded-xl px-3 py-2 border border-[#d6e6ff]">
                 <Users size={14} className="text-[#3a7ab8]" />
