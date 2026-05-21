@@ -81,7 +81,8 @@ export default function WalkPage() {
   const polylineRef = useRef<any>(null)        // 내가 실제 걸은 GPS 경로 (초록 실선)
   const navlineRef = useRef<any>(null)          // 목적지까지 추천 경로 (파란 굵은 실선)
   const dstMarkerRef = useRef<any>(null)        // 목적지 깃발 마커
-  const meMarkerRef = useRef<any>(null)         // 내 위치 + 진행방향 화살표
+  const meMarkerRef = useRef<any>(null)         // 내 위치 점
+  const arrowsRef = useRef<any[]>([])           // 경로 위 진행방향 ▶ 마커들
   const [navRoute, setNavRoute] = useState<{ distance: number; duration: number; geometry: [number, number][] } | null>(null)
   const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
   const [crossings, setCrossings] = useState<number | null>(null)

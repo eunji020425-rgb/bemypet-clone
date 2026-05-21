@@ -43,6 +43,7 @@ export default function Header() {
   }
 
   return (
+    <>
     <header
       className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-[#e6effc]"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -92,28 +93,96 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 햄버거 메뉴 (열렸을 때) */}
-      {menuOpen && (
-        <div className="absolute top-full inset-x-0 bg-white border-b border-[#e6effc] shadow-lg">
-          <nav className="flex flex-col py-2 text-sm text-[#2a3a55]">
-            <Link href="/" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">🏠 홈</Link>
-            <Link href="/map" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">🗺️ 통합 지도</Link>
-            <Link href="/walk" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">🐾 산책</Link>
-            <Link href="/community" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">📝 커뮤니티</Link>
-            <Link href="/chat" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 hover:bg-[#f0f6ff]">💬 실시간채팅</Link>
+    </header>
+
+    {/* 사이드 드로어 (header 밖, fixed positioning) */}
+    {menuOpen && (
+      <>
+        {/* 어두운 오버레이 */}
+        <div
+          className="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-200"
+          onClick={() => setMenuOpen(false)}
+        />
+        {/* 왼쪽에서 슬라이드 인 */}
+        <aside
+          className="fixed top-0 left-0 bottom-0 w-72 max-w-[80vw] bg-white z-50 shadow-2xl flex flex-col"
+          style={{
+            paddingTop: 'env(safe-area-inset-top)',
+            animation: 'slideInLeft 0.25s ease-out',
+          }}
+        >
+          {/* 드로어 헤더 */}
+          <div className="h-12 px-4 flex items-center justify-between border-b border-[#e6effc]">
+            <span className="text-base font-bold text-[#2a3a55]" style={{ fontFamily: "'DM Serif Display', serif" }}>
+              메뉴
+            </span>
+            <button
+              onClick={() => setMenuOpen(false)}
+              className="p-1.5 -mr-1.5 text-[#94a3b8] hover:text-[#2a3a55]"
+              aria-label="close"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* 메뉴 항목 */}
+          <nav className="flex flex-col py-2 text-sm text-[#2a3a55] flex-1 overflow-y-auto">
+            <Link href="/" onClick={() => setMenuOpen(false)} className="px-5 py-3 hover:bg-[#f0f6ff] flex items-center gap-3">
+              <span className="text-lg">🏠</span> 홈
+            </Link>
+            <Link href="/map" onClick={() => setMenuOpen(false)} className="px-5 py-3 hover:bg-[#f0f6ff] flex items-center gap-3">
+              <span className="text-lg">🗺️</span> 통합 지도
+            </Link>
+            <Link href="/walk" onClick={() => setMenuOpen(false)} className="px-5 py-3 hover:bg-[#f0f6ff] flex items-center gap-3">
+              <span className="text-lg">🐾</span> 산책
+            </Link>
+            <Link href="/community" onClick={() => setMenuOpen(false)} className="px-5 py-3 hover:bg-[#f0f6ff] flex items-center gap-3">
+              <span className="text-lg">📝</span> 커뮤니티
+            </Link>
+            <Link href="/chat" onClick={() => setMenuOpen(false)} className="px-5 py-3 hover:bg-[#f0f6ff] flex items-center gap-3">
+              <span className="text-lg">💬</span> 실시간채팅
+            </Link>
             {user && (
-              <Link href="/community/write" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 text-[#3a7ab8] font-bold hover:bg-[#f0f6ff]">
-                ✎ 글쓰기
+              <Link href="/community/write" onClick={() => setMenuOpen(false)} className="px-5 py-3 text-[#3a7ab8] font-bold hover:bg-[#f0f6ff] flex items-center gap-3">
+                <span className="text-lg">✎</span> 글쓰기
               </Link>
             )}
             {isAdmin && (
-              <Link href="/admin" onClick={() => setMenuOpen(false)} className="px-5 py-2.5 text-[#a86570] font-semibold hover:bg-[#fdf2f4]">
-                <Shield size={14} className="inline mr-1.5" /> 관리자 페이지
+              <Link href="/admin" onClick={() => setMenuOpen(false)} className="px-5 py-3 text-[#a86570] font-semibold hover:bg-[#fdf2f4] flex items-center gap-3 border-t border-[#e6effc] mt-2 pt-3">
+                <Shield size={16} /> 관리자 페이지
               </Link>
             )}
           </nav>
-        </div>
-      )}
-    </header>
+
+          {/* 드로어 푸터 - 로그인 상태 */}
+          <div className="border-t border-[#e6effc] p-4">
+            {user ? (
+              <button
+                onClick={() => { setMenuOpen(false); handleLogout() }}
+                className="w-full flex items-center justify-center gap-2 bg-[#f0f6ff] hover:bg-[#e6effc] text-[#6a7c95] text-sm py-2.5 rounded-full transition"
+              >
+                <LogOut size={14} /> 로그아웃
+              </button>
+            ) : (
+              <Link
+                href="/auth/login"
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center justify-center bg-[#3a7ab8] hover:bg-[#1a2a3f] text-white text-sm font-bold py-2.5 rounded-full transition"
+              >
+                로그인 / 회원가입
+              </Link>
+            )}
+          </div>
+        </aside>
+
+        <style>{`
+          @keyframes slideInLeft {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+          }
+        `}</style>
+      </>
+    )}
+    </>
   )
 }
