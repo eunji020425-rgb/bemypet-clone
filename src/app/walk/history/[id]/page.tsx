@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Footprints, Clock, MapPin, TrendingUp, ArrowLeft, Calendar, Navigation } from 'lucide-react'
 import WalkDetailMap from './WalkDetailMap'
+import DeleteSessionButton from '../DeleteSessionButton'
 
 interface Session {
   id: string
@@ -95,6 +96,9 @@ export default async function WalkDetailPage({ params }: { params: Promise<{ id:
             진행중
           </span>
         )}
+        <div className="ml-auto">
+          <DeleteSessionButton sessionId={s.id} variant="pill" afterDelete="navigate" />
+        </div>
       </div>
 
       {/* 메타 정보 */}

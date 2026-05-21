@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Footprints, Clock, TrendingUp } from 'lucide-react'
+import DeleteSessionButton from './DeleteSessionButton'
 
 interface Session {
   id: string
@@ -135,8 +136,11 @@ export default async function WalkHistoryPage() {
           {list.map(s => {
             const isActive = !s.ended_at
             return (
+              <div key={s.id} className="relative">
+                <div className="absolute top-2 right-2 z-10">
+                  <DeleteSessionButton sessionId={s.id} />
+                </div>
               <Link
-                key={s.id}
                 href={`/walk/history/${s.id}`}
                 className={`block bg-white rounded-xl p-4 border hover:shadow-md transition-shadow ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
               >
@@ -180,6 +184,7 @@ export default async function WalkHistoryPage() {
                   </div>
                 </div>
               </Link>
+              </div>
             )
           })}
         </div>

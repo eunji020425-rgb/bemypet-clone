@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Footprints, Clock, TrendingUp } from 'lucide-react'
+import DeleteSessionButton from './history/DeleteSessionButton'
 
 interface Session {
   id: string
@@ -91,10 +92,13 @@ export default function RecentWalks({ isLoggedIn, sessions }: { isLoggedIn: bool
             const STALE_MS = 30 * 60 * 1000
             const isActive = !s.ended_at && (Date.now() - startedMs) < STALE_MS
             return (
+              <div key={s.id} className="relative">
+                <div className="absolute top-1 right-1 z-10">
+                  <DeleteSessionButton sessionId={s.id} />
+                </div>
               <Link
-                key={s.id}
                 href={`/walk/history/${s.id}`}
-                className={`bg-white rounded-xl p-4 border hover:shadow-md transition-shadow ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
+                className={`block bg-white rounded-xl p-4 border hover:shadow-md transition-shadow ${isActive ? 'border-[#22c55e] bg-[#f0fdf4]' : 'border-[#d6e6ff] hover:border-[#3a7ab8]'}`}
               >
                 <div className="flex items-start gap-2 mb-2">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#22c55e]' : 'bg-[#d6e6ff]'}`}>
@@ -122,6 +126,7 @@ export default function RecentWalks({ isLoggedIn, sessions }: { isLoggedIn: bool
                   </div>
                 )}
               </Link>
+              </div>
             )
           })}
         </div>

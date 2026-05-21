@@ -57,6 +57,26 @@ export function makeDangerPopupHtml(r: DangerReport): string {
 }
 
 /**
+ * 같은(±2m 이내) 좌표에 마커가 여러 개면 살짝 원형 오프셋으로 분산
+ * (한 사용자가 같은 위치에 여러 카테고리 신고하는 케이스 처리)
+ */
+function spreadOverlaps(reports: DangerReport[]): Array<DangerReport & { offsetIdx: number; siblingCount: number }> {
+  const KEY_PRECISION = 5 // 약 1m
+  const groups = new Map<string, DangerReport[]>()
+  for (const r of reports) {
+    const key = `${r.lat.toFixed(KEY_PRECISION)},${r.lng.toFixed(KEY_PRECISION)}`
+    const arr = groups.get(key) ?? []
+    arr.push(r)
+    groups.set(key, arr)
+  }
+  const out: Array<DangerReport & { offsetIdx: number; siblingCount: number }> = []
+  for (const arr of groups.values()) {
+    arr.forEach((r, i) => out.push({ ...r, offsetIdx: i, siblingCount: arr.length }))
+  }
+  return out
+}
+
+/**
  * 지도에 위험 제보 마커들을 한 번에 갱신
  * @returns 추가된 Leaflet 마커 배열
  */
@@ -70,9 +90,20 @@ export async function renderDangerReports(
 
   const L = (await import('leaflet')).default
   const out: import('leaflet').Marker[] = []
-  for (const r of reports) {
+  const spread = spreadOverlaps(reports)
+
+  for (const r of spread) {
+    let lat = r.lat
+    let lng = r.lng
+    if (r.siblingCount > 1) {
+      // 원형으로 분산 — 약 8m 반경
+      const angle = (r.offsetIdx / r.siblingCount) * Math.PI * 2
+      const radiusDeg = 0.00007 // 약 8m
+      lat += Math.cos(angle) * radiusDeg
+      lng += Math.sin(angle) * radiusDeg
+    }
     const icon = makeDangerIcon(L, r.category)
-    const marker = L.marker([r.lat, r.lng], { icon, zIndexOffset: 800 })
+    const marker = L.marker([lat, lng], { icon, zIndexOffset: 800 })
       .addTo(map)
       .bindPopup(makeDangerPopupHtml(r))
     out.push(marker)
