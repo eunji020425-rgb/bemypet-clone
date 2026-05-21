@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Navigation, ExternalLink, Footprints, Users } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 import { createClient } from '@/lib/supabase/client'
@@ -86,6 +87,7 @@ function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
 }
 
 export default function WalkPage() {
+  const router = useRouter()
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const markersRef = useRef<any[]>([])
@@ -171,11 +173,13 @@ export default function WalkPage() {
       } catch {}
     }
   }
-  const stopWalkingWithData = () => {
+  const stopWalkingWithData = async () => {
     setNavRoute(null)
     setArrivalState('far')
     setCrossings(null)
-    stopWalking(tracker.distance, tracker.path)
+    await stopWalking(tracker.distance, tracker.path)
+    // 다녀온 곳 목록 즉시 갱신
+    router.refresh()
   }
 
   const initMap = async (lat: number, lng: number, items: Trail[]) => {
