@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
-import { PenSquare, Menu, X, Stethoscope, MapPin, Footprints, PawPrint, Map as MapIcon, Shield } from 'lucide-react'
+import { Menu, X, Stethoscope, Map as MapIcon, Shield } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null)
@@ -67,21 +67,12 @@ export default function Header() {
         {/* 우측 버튼 영역 */}
         <div className="flex items-center gap-2">
           {user ? (
-            <>
-              <Link
-                href="/community/write"
-                className="hidden md:flex items-center gap-1.5 bg-[#2a3a55] hover:bg-[#1a2a3f] text-[#f0f6ff] text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
-              >
-                <PenSquare size={14} />
-                글쓰기
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-[#6a7c95] hover:text-[#2a3a55] px-3 py-2 transition-colors"
-              >
-                로그아웃
-              </button>
-            </>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-[#6a7c95] hover:text-[#2a3a55] px-3 py-2 transition-colors"
+            >
+              로그아웃
+            </button>
           ) : (
             <Link
               href="/auth/login"
