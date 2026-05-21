@@ -98,14 +98,16 @@ export default function Header() {
     {/* 사이드 드로어 (header 밖, fixed positioning) */}
     {menuOpen && (
       <>
-        {/* 어두운 오버레이 */}
+        {/* 어두운 오버레이 (Leaflet 팬 z-index 700보다 높게) */}
         <div
-          className="fixed inset-0 bg-black/40 z-40 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-black/40 animate-in fade-in duration-200"
+          style={{ zIndex: 9998 }}
           onClick={() => setMenuOpen(false)}
         />
         {/* 왼쪽에서 슬라이드 인 */}
         <aside
-          className="fixed top-0 left-0 bottom-0 w-72 max-w-[80vw] bg-white z-50 shadow-2xl flex flex-col"
+          className="fixed top-0 left-0 bottom-0 w-72 max-w-[80vw] bg-white shadow-2xl flex flex-col"
+          style={{ zIndex: 9999, animation: 'slideInLeft 0.25s ease-out', paddingTop: 'env(safe-area-inset-top)' }}
           style={{
             paddingTop: 'env(safe-area-inset-top)',
             animation: 'slideInLeft 0.25s ease-out',

@@ -602,8 +602,8 @@ export default function WalkPage() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="lg:w-3/5 relative">
+      <div className="flex flex-col gap-4">
+        <div className="relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '550px' }} />
 
           {/* 나침반 위젯 (산책 중일 때만, 우하단) */}
