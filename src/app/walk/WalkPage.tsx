@@ -678,22 +678,25 @@ export default function WalkPage() {
               '미분석': 'bg-gray-400 text-white',
             }
             return (
-              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
                 {TABS.map(t => {
                   const active = diffFilter === t
                   const c = counts[t]
-                  if (c === 0 && t !== '전체') return null
+                  const disabled = c === 0 && t !== '전체'
                   return (
                     <button
                       key={t}
-                      onClick={() => setDiffFilter(t as any)}
-                      className={`flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition border ${
+                      onClick={() => !disabled && setDiffFilter(t as any)}
+                      disabled={disabled}
+                      className={`flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full transition border whitespace-nowrap ${
                         active
                           ? COLOR[t] + ' border-transparent shadow-sm'
+                          : disabled
+                          ? 'bg-[#f1f5f9] text-[#cbd5e1] border-[#e2e8f0] cursor-not-allowed'
                           : 'bg-white text-[#6a7c95] border-[#d6e6ff] hover:border-[#3a7ab8]'
                       }`}
                     >
-                      {t} <span className={active ? 'opacity-80' : 'text-[#94a3b8]'}>{c}</span>
+                      {t} <span className={active ? 'opacity-80' : disabled ? '' : 'text-[#94a3b8]'}>{c}</span>
                     </button>
                   )
                 })}
