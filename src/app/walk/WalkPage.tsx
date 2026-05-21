@@ -1,8 +1,10 @@
 ﻿'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Navigation, ExternalLink } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Navigation, ExternalLink, Footprints, Users } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+import { createClient } from '@/lib/supabase/client'
+import { useWalkPresence, getOrCreateAnonId } from './useWalkPresence'
 
 interface Trail {
   id: string
@@ -35,6 +37,24 @@ const DIFF_COLOR: Record<string, string> = {
   '어려움': 'text-red-600 bg-red-50 border-red-200',
 }
 
+/** 인원수에 따라 마커 색상/배지 다르게 */
+function makeMarkerIcon(L: any, index: number, count: number) {
+  // 인원수 색: 0 = 연두, 1-2 = 파랑, 3+ = 진파랑 (Live!)
+  const bg = count >= 3 ? '#1d4ed8' : count >= 1 ? '#3b82f6' : '#86efac'
+  const badge = count > 0
+    ? `<div style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;font-size:10px;font-weight:bold;min-width:18px;height:18px;border-radius:9px;border:2px solid white;display:flex;align-items:center;justify-content:center;padding:0 4px;z-index:10">${count}</div>`
+    : ''
+  return L.divIcon({
+    html: `<div style="position:relative;width:36px;height:42px;cursor:pointer">
+      <div style="background:${bg};color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:absolute;top:0;left:0;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
+        <span style="transform:rotate(45deg);font-size:11px;font-weight:bold;color:white">${index + 1}</span>
+      </div>
+      ${badge}
+    </div>`,
+    className: '', iconAnchor: [18, 42],
+  })
+}
+
 function calcDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -57,6 +77,30 @@ export default function WalkPage() {
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
   const [locError, setLocError] = useState('')
   const [showResearchBtn, setShowResearchBtn] = useState(false)
+  const [selfId, setSelfId] = useState<string>('')
+  const [selfNick, setSelfNick] = useState<string>('산책러')
+
+  // 로그인 사용자 또는 익명 ID 확보
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setSelfId(data.user.id)
+        setSelfNick(
+          (data.user.user_metadata?.nickname as string) ||
+          (data.user.user_metadata?.name as string) ||
+          (data.user.email?.split('@')[0]) ||
+          '산책러'
+        )
+      } else {
+        setSelfId(getOrCreateAnonId())
+      }
+    })
+  }, [])
+
+  // 화면에 보이는 산책로 ID들 (메모이즈)
+  const trailIds = useMemo(() => trails.map(t => t.id), [trails])
+  const { counts, activeTrail, startWalking, stopWalking } = useWalkPresence(trailIds, selfId, selfNick)
 
   const initMap = async (lat: number, lng: number, items: Trail[]) => {
     if (typeof window === 'undefined') return
@@ -98,18 +142,12 @@ export default function WalkPage() {
 
     items.forEach((t, i) => {
       if (!t.lat || !t.lng) return
-      const icon = L.divIcon({
-        html: `<div style="position:relative;width:36px;height:42px;cursor:pointer">
-          <div style="background:#86efac;color:white;width:36px;height:36px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);position:absolute;top:0;left:0;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
-            <span style="transform:rotate(45deg);font-size:11px;font-weight:bold;color:white">${i + 1}</span>
-          </div>
-        </div>`,
-        className: '', iconAnchor: [18, 42],
-      })
-      const marker = L.marker([t.lat, t.lng], { icon })
+      const marker = L.marker([t.lat, t.lng], { icon: makeMarkerIcon(L, i, 0) })
         .addTo(mapInstanceRef.current)
         .bindPopup(`<b>${t.name}</b><br/>${t.address ?? ''}<br/>${t.distance.toFixed(1)}km`)
       marker.on('click', () => setSelected(t))
+      ;(marker as any)._trailId = t.id
+      ;(marker as any)._trailIndex = i
       markersRef.current.push(marker)
     })
 
@@ -230,6 +268,24 @@ export default function WalkPage() {
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
 
+  // 인원수 변동 → 마커 아이콘 갱신
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let cancelled = false
+    ;(async () => {
+      const L = (await import('leaflet')).default
+      if (cancelled) return
+      markersRef.current.forEach((m: any) => {
+        const tid = m._trailId
+        if (!tid) return  // 내 위치 마커는 _trailId 없음
+        const idx = m._trailIndex ?? 0
+        const c = counts[tid] ?? 0
+        m.setIcon(makeMarkerIcon(L, idx, c))
+      })
+    })()
+    return () => { cancelled = true }
+  }, [counts])
+
   return (
     <div className="flex flex-col gap-4">
       {/* 컨트롤 */}
@@ -262,6 +318,21 @@ export default function WalkPage() {
       {locStatus === 'success' && userPos && (
         <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-xs text-green-700">
           ✅ 현재 위치 기준 추천 (반경 20km 내 공원·산책로)
+        </div>
+      )}
+      {activeTrail && (
+        <div className="bg-gradient-to-r from-[#3a7ab8] to-[#22c55e] text-white rounded-xl px-4 py-3 text-sm font-bold flex items-center justify-between shadow-md">
+          <span className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            🐾 산책 중 — <span className="underline">{trails.find(t => t.id === activeTrail)?.name ?? '산책로'}</span>
+            <span className="text-white/80 font-normal text-xs">· 같이 걷는 사람 {(counts[activeTrail] ?? 1) - 1}명</span>
+          </span>
+          <button
+            onClick={stopWalking}
+            className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-full transition"
+          >
+            산책 종료
+          </button>
         </div>
       )}
       {(locStatus === 'denied' || locStatus === 'fallback') && (
@@ -324,6 +395,12 @@ export default function WalkPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-bold text-[#2a3a55] truncate flex-1">{t.name}</p>
+                      {(counts[t.id] ?? 0) > 0 && (
+                        <span className="flex items-center gap-1 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-bold flex-shrink-0">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                          {counts[t.id]}명
+                        </span>
+                      )}
                       <span className="text-xs text-[#22c55e] font-medium flex-shrink-0">
                         {t.distance < 1 ? `${Math.round(t.distance * 1000)}m` : `${t.distance.toFixed(1)}km`}
                       </span>
@@ -396,6 +473,31 @@ export default function WalkPage() {
                   ))}
                 </div>
               )}
+              {/* 실시간 인원수 + 산책 시작/종료 */}
+              <div className="mt-3 flex items-center gap-2 flex-wrap bg-white rounded-xl px-3 py-2 border border-[#d6e6ff]">
+                <Users size={14} className="text-[#3a7ab8]" />
+                <span className="text-sm text-[#2a3a55]">
+                  지금 <strong className="text-[#3a7ab8]">{counts[selected.id] ?? 0}명</strong> 산책 중
+                </span>
+                <span className="flex-1" />
+                {activeTrail === selected.id ? (
+                  <button
+                    onClick={stopWalking}
+                    className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 transition"
+                  >
+                    <Footprints size={12} /> 산책 종료
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => startWalking(selected.id)}
+                    disabled={!selfId}
+                    className="bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 transition"
+                  >
+                    <Footprints size={12} /> 산책 시작
+                  </button>
+                )}
+              </div>
+
               <div className="flex gap-3 mt-3">
                 <a
                   href={`/route?from=walk&name=${encodeURIComponent(selected.name)}&lat=${selected.lat}&lng=${selected.lng}${selected.address ? `&addr=${encodeURIComponent(selected.address)}` : ''}`}
