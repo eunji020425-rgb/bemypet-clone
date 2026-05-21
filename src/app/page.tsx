@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { MessageCircle, Users, Map as MapIcon, Footprints } from 'lucide-react'
+import WeatherCard from '@/components/WeatherCard'
 
 export default function HomePage() {
   return (
@@ -63,26 +64,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 메인 카드 - 통합 지도 추천 */}
-      <Link href="/walk" className="block">
-        <section className="mt-6 backdrop-blur-xl bg-white/65 border border-white/50 rounded-3xl p-7 hover:bg-white/75 transition-colors">
-          <p className="text-[11px] text-[#3a7ab8] tracking-[2px] font-semibold">— 오늘 —</p>
-          <h3 className="mt-2 text-2xl text-[#2a3a55] leading-tight tracking-[-0.5px] font-bold">
-            산책하기 <span className="text-[#3a7ab8]">좋은 날</span>
-          </h3>
-          <p className="mt-2 text-xs text-[#6a7c95]">근처 산책로·카페·동물병원을 한눈에 보세요</p>
-          <div className="mt-4 flex gap-3">
-            <div className="flex-1 bg-white/60 rounded-2xl px-4 py-3">
-              <p className="text-lg text-[#2a3a55] font-bold">23°C</p>
-              <p className="text-[11px] text-[#6a7c95] tracking-wider mt-0.5">맑음</p>
-            </div>
-            <div className="flex-1 bg-white/60 rounded-2xl px-4 py-3">
-              <p className="text-lg text-[#2a3a55] font-bold">4곳</p>
-              <p className="text-[11px] text-[#6a7c95] tracking-wider mt-0.5">추천 장소</p>
-            </div>
-          </div>
-        </section>
-      </Link>
+      {/* 메인 카드 - 실시간 날씨 + 산책 추천 */}
+      <WeatherCard />
 
       {/* 자유게시판 미리보기 */}
       <section className="mt-10">
