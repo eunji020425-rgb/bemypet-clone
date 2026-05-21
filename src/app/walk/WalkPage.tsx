@@ -9,6 +9,11 @@ import { useWalkPresence, getOrCreateAnonId } from './useWalkPresence'
 import { useWalkTracker, formatDistance, formatDurationShort } from './useWalkTracker'
 import { useCompass, bearing } from './useCompass'
 import DogRulesPanel from './DogRulesPanel'
+import DangerReportButton from '@/components/danger/DangerReportButton'
+import DangerReportModal from '@/components/danger/DangerReportModal'
+import { useDangerToast } from '@/components/danger/useDangerToast'
+import { renderDangerReports } from '@/components/danger/DangerMarker'
+import type { DangerReport } from '@/lib/danger/types'
 
 interface Trail {
   id: string
@@ -100,6 +105,10 @@ export default function WalkPage() {
   const [arrivalState, setArrivalState] = useState<'far' | 'near' | 'arrived'>('far')
   const [crossings, setCrossings] = useState<number | null>(null)
   const [diffFilter, setDiffFilter] = useState<'전체' | '쉬움' | '보통' | '어려움'>('전체')
+  const [dangerOpen, setDangerOpen] = useState(false)
+  const [dangerReports, setDangerReports] = useState<DangerReport[]>([])
+  const dangerMarkersRef = useRef<import('leaflet').Marker[]>([])
+  const dangerToast = useDangerToast()
   const lastSearchCenterRef = useRef<[number, number] | null>(null)
   const [trails, setTrails] = useState<Trail[]>([])
   const [loading, setLoading] = useState(false)
@@ -532,6 +541,33 @@ export default function WalkPage() {
     }
   }, [activeTrail])
 
+  // 주변 위험 신고 가져오기 (위치 바뀔 때마다)
+  useEffect(() => {
+    const pos = tracker.coords ?? (userPos ? { lat: userPos[0], lng: userPos[1] } : null)
+    if (!pos) return
+    let cancelled = false
+    fetch(`/api/danger-reports?lat=${pos.lat}&lng=${pos.lng}&radius_km=2`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!cancelled && data?.reports) setDangerReports(data.reports as DangerReport[])
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [userPos?.[0], userPos?.[1]])
+
+  // 위험 제보 마커 그리기
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const map = mapInstanceRef.current
+    if (!map) return
+    let cancelled = false
+    ;(async () => {
+      const next = await renderDangerReports(map, dangerReports, dangerMarkersRef.current)
+      if (!cancelled) dangerMarkersRef.current = next
+    })()
+    return () => { cancelled = true }
+  }, [dangerReports])
+
   // 인원수 변동 → 마커 아이콘 갱신
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -642,6 +678,13 @@ export default function WalkPage() {
       <div className="flex flex-col gap-4">
         <div className="relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '260px' }} />
+
+          {/* 위험 신고 버튼 (좌하단, Leaflet 줌 컨트롤 피해) */}
+          {(tracker.coords || userPos) && (
+            <div className="absolute bottom-3 left-3 z-[1000]">
+              <DangerReportButton onClick={() => setDangerOpen(true)} />
+            </div>
+          )}
 
           {/* 내 위치로 돌아가기 (위치 있을 때 항상 상단 중앙) */}
           {(tracker.coords || userPos) && (
@@ -958,6 +1001,25 @@ export default function WalkPage() {
           </div>
         </div>
       )}
+
+      {/* 위험 신고 모달 + 토스트 */}
+      <DangerReportModal
+        open={dangerOpen}
+        onClose={() => setDangerOpen(false)}
+        coords={tracker.coords ?? (userPos ? { lat: userPos[0], lng: userPos[1] } : null)}
+        onSubmitted={(result) => {
+          dangerToast.show(`신고 완료! +${result.points_earned}p`, 'success')
+          // 즉시 새로 가져와서 마커 업데이트
+          const pos = tracker.coords ?? (userPos ? { lat: userPos[0], lng: userPos[1] } : null)
+          if (pos) {
+            fetch(`/api/danger-reports?lat=${pos.lat}&lng=${pos.lng}&radius_km=2`)
+              .then(r => r.ok ? r.json() : null)
+              .then(data => { if (data?.reports) setDangerReports(data.reports as DangerReport[]) })
+              .catch(() => {})
+          }
+        }}
+      />
+      <dangerToast.ToastHost />
     </div>
   )
 }

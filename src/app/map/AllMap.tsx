@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigation, Phone, ExternalLink, Hospital, UtensilsCrossed, Coffee, Trees, Footprints } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+import DangerReportButton from '@/components/danger/DangerReportButton'
+import DangerReportModal from '@/components/danger/DangerReportModal'
+import { useDangerToast } from '@/components/danger/useDangerToast'
+import { renderDangerReports } from '@/components/danger/DangerMarker'
+import type { DangerReport } from '@/lib/danger/types'
 
 type Category = 'hospital' | 'restaurant' | 'cafe' | 'playground' | 'walk'
 
@@ -80,6 +85,10 @@ export default function AllMap() {
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'success' | 'denied' | 'fallback'>('idle')
   const [locError, setLocError] = useState('')
   const [showResearchBtn, setShowResearchBtn] = useState(false)
+  const [dangerOpen, setDangerOpen] = useState(false)
+  const [dangerReports, setDangerReports] = useState<DangerReport[]>([])
+  const dangerMarkersRef = useRef<import('leaflet').Marker[]>([])
+  const dangerToast = useDangerToast()
 
   const fetchAll = async (lat: number, lng: number, rect?: string) => {
     setLoading(true)
@@ -537,6 +546,31 @@ export default function AllMap() {
     return () => { mapInstanceRef.current?.remove(); mapInstanceRef.current = null }
   }, [])
 
+  // 주변 위험 신고 fetch
+  useEffect(() => {
+    if (!userPos) return
+    let cancelled = false
+    fetch(`/api/danger-reports?lat=${userPos[0]}&lng=${userPos[1]}&radius_km=3`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!cancelled && data?.reports) setDangerReports(data.reports as DangerReport[])
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [userPos?.[0], userPos?.[1]])
+
+  // 위험 마커 그리기
+  useEffect(() => {
+    const map = mapInstanceRef.current
+    if (!map) return
+    let cancelled = false
+    ;(async () => {
+      const next = await renderDangerReports(map, dangerReports, dangerMarkersRef.current)
+      if (!cancelled) dangerMarkersRef.current = next
+    })()
+    return () => { cancelled = true }
+  }, [dangerReports])
+
   const filtered = filter === 'all' ? items : items.filter(it => it.category === filter)
   const counts: Record<Category, number> = {
     hospital: items.filter(it => it.category === 'hospital').length,
@@ -606,6 +640,13 @@ export default function AllMap() {
         {/* 지도 */}
         <div className="relative">
           <div ref={mapRef} className="w-full rounded-2xl overflow-hidden border border-[#d6e6ff]" style={{ height: '300px' }} />
+
+          {/* 위험 신고 FAB (지도 우하단) */}
+          {userPos && (
+            <div className="absolute bottom-3 right-3 z-[1000]">
+              <DangerReportButton variant="floating" onClick={() => setDangerOpen(true)} />
+            </div>
+          )}
           {showResearchBtn && (
             <button
               onClick={() => {
@@ -889,6 +930,23 @@ export default function AllMap() {
           </div>
         </div>
       )}
+
+      {/* 위험 신고 모달 + 토스트 */}
+      <DangerReportModal
+        open={dangerOpen}
+        onClose={() => setDangerOpen(false)}
+        coords={userPos ? { lat: userPos[0], lng: userPos[1] } : null}
+        onSubmitted={(result) => {
+          dangerToast.show(`신고 완료! +${result.points_earned}p`, 'success')
+          if (userPos) {
+            fetch(`/api/danger-reports?lat=${userPos[0]}&lng=${userPos[1]}&radius_km=3`)
+              .then(r => r.ok ? r.json() : null)
+              .then(data => { if (data?.reports) setDangerReports(data.reports as DangerReport[]) })
+              .catch(() => {})
+          }
+        }}
+      />
+      <dangerToast.ToastHost />
     </div>
   )
 }

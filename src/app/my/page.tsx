@@ -73,6 +73,13 @@ export default async function MyPage() {
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
 
+  // 내 포인트 총합
+  const { data: pointsRows } = await supabase
+    .from('user_points')
+    .select('amount')
+    .eq('user_id', user.id)
+  const totalPoints = (pointsRows ?? []).reduce((s, r) => s + (r.amount ?? 0), 0)
+
   const nickname = profile?.nickname ?? user.email?.split('@')[0] ?? '익명'
   const email = profile?.email ?? user.email ?? ''
   const avatarLetter = nickname.charAt(0).toUpperCase()
@@ -92,6 +99,9 @@ export default async function MyPage() {
           <div className="flex-1 min-w-0">
             <p className="text-base font-bold text-[#2a3a55] truncate">{nickname}</p>
             <p className="text-xs text-[#94a3b8] truncate">{email}</p>
+            <p className="text-xs text-[#3a7ab8] font-bold mt-1">
+              ⭐ {totalPoints.toLocaleString()} 포인트
+            </p>
           </div>
           <EditNickname currentNickname={nickname} />
         </div>
